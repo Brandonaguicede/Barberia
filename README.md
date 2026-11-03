@@ -18,8 +18,8 @@ Completar las variables de Supabase en .env.local. Los archivos de credenciales 
 
 1. Importar este repositorio y seleccionar la rama main.
 2. Root Directory: raiz del repositorio (./). Framework: Vite. Node.js: 24.x. vercel.json define npm ci, npm run build y salida dist, ademas de las rutas SPA y cabeceras.
-3. Crear VITE_SUPABASE_URL con el valor https://chcqmsccybrmgvzopxmw.supabase.co y VITE_SUPABASE_ANON_KEY con la clave publica anon de ese mismo proyecto. La instalacion local ya contiene ambos valores en .env.local. No usar la contrasena PostgreSQL ni service_role en variables VITE_.
-4. Desplegar y copiar el origen HTTPS definitivo, sin barra final. En Supabase configurar APP_ORIGIN para booking y admin-users con ese origen y actualizar Auth > URL Configuration > Site URL. Hasta entonces las funciones aceptan solamente http://localhost:5173.
+3. La aplicacion incluye la configuracion publica del proyecto en src/config/supabase.ts y funciona sin variables adicionales. Para usar otro proyecto, crear VITE_SUPABASE_URL con el valor https://chcqmsccybrmgvzopxmw.supabase.co y VITE_SUPABASE_ANON_KEY con la clave publica anon de ese mismo proyecto. La instalacion local ya contiene ambos valores en .env.local. No usar la contrasena PostgreSQL ni service_role en variables VITE_.
+4. Desplegar y copiar el origen HTTPS definitivo, sin barra final. En Supabase configurar APP_ORIGIN para booking y admin-users con ese origen y actualizar Auth > URL Configuration > Site URL. El origen autorizado actual es https://barberia-d2vs.vercel.app.
 5. Comprobar el catalogo publico y el acceso en /login. Cargar servicios, barberos y horarios reales antes de recibir reservas.
 
 Las variables VITE_ se incorporan durante la compilacion: despues de cambiarlas se necesita un nuevo despliegue. VITE_VAPID_PUBLIC_KEY es opcional mientras Web Push permanezca desactivado. Push y recordatorios requieren configuracion adicional descrita en docs/setup.md.

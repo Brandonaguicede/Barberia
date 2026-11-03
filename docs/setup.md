@@ -69,3 +69,5 @@ El catalogo esta vacio: faltan servicios, personal y horarios reales. Web Push y
 El proyecto anterior ubiagfhabfjgahxgrrtp no se ha eliminado. Las variables previas se conservan localmente en .env.local.previous y supabase/.env.previous.
 
 Verificacion final en el proyecto elegido: catalogo real HTTP 200 en navegador, inicio de sesion y acceso al Dashboard, registro publico cerrado, administracion anonima rechazada y build correcto.
+
+La conexion del navegador tambien tiene una configuracion publica predeterminada en src/config/supabase.ts (URL y clave anon con RLS). Las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY pueden sobrescribirla. No contiene service_role ni contrasenas. Origen de funciones publicado: https://barberia-d2vs.vercel.app.
