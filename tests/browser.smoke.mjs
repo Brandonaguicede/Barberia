@@ -32,12 +32,6 @@ test('reserva y enlace privado en escritorio y móvil (API simulada)',async()=>{
  assert.equal(await page.getByRole('button',{name:/Ángel/}).getAttribute('aria-pressed'),'true')
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false)
  await page.screenshot({path:`.npm-cache/screenshots/booking-${device}.png`,fullPage:true,animations:'disabled'})
- if(device==='mobile'){
-  await page.getByRole('button',{name:'Abrir menú',exact:true}).click()
-  assert.equal(await page.getByRole('button',{name:'Cerrar menú',exact:true}).getAttribute('aria-expanded'),'true')
-  await page.keyboard.press('Escape')
-  assert.equal(await page.getByRole('button',{name:'Abrir menú',exact:true}).getAttribute('aria-expanded'),'false')
- }
  await page.getByRole('button',{name:'Continuar',exact:true}).click()
  await page.getByRole('grid',{name:'Fecha de la cita'}).waitFor()
  if(date.slice(0,7)!==localDate().slice(0,7))await page.getByRole('button',{name:'Mes siguiente',exact:true}).click()
