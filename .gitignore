@@ -1,4 +1,12 @@
 node_modules/
 dist/
-.env
+.npm-cache/
+.vercel/
 *.log
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/.env.*
+supabase/.temp/
+supabase/.branches/

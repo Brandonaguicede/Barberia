@@ -1,220 +1,278 @@
-import type { Barber, Service, Appointment, AppStats, User } from "../types";
-
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-let accessToken = localStorage.getItem("accessToken");
-let refreshToken = localStorage.getItem("refreshToken");
-
+import { supabase } from "./supabase";
+import type { Appointment, AppStats, Barber, Service, User } from "../types";
+import { localDate, localTime } from "../utils/booking";
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-  ) {
+  constructor(message: string, public status = 400) {
     super(message);
   }
 }
-
-export function setTokens(tokens: { accessToken: string; refreshToken: string } | null) {
-  accessToken = tokens?.accessToken || null;
-  refreshToken = tokens?.refreshToken || null;
-  if (tokens) {
-    localStorage.setItem("accessToken", tokens.accessToken);
-    localStorage.setItem("refreshToken", tokens.refreshToken);
-  } else {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-  }
+interface DbResult<T> {
+  data: T | null;
+  error: { message: string } | null;
 }
-
-const toAppointmentPayload = (body: Partial<Appointment>) => ({
-  clientName: body.client_name,
-  clientPhone: body.client_phone,
-  clientEmail: body.client_email || undefined,
-  barberId: body.barber_id,
-  serviceId: body.service_id,
-  appointmentDate: body.appointment_date,
-  appointmentTime: body.appointment_time,
-  status: body.status,
-  notes: body.notes,
-});
-
-const normalizeActivePayload = <T extends { active?: any }>(body: T) => ({
-  ...body,
-  ...(body.active !== undefined ? { active: Boolean(Number(body.active)) } : {}),
-});
-
-const normalize = (value: any): any => {
-  if (Array.isArray(value)) return value.map(normalize);
-  if (!value || typeof value !== "object") return value;
-  if ("appointmentDate" in value) {
-    return {
-      ...value,
-      client_name: value.clientName,
-      client_phone: value.clientPhone,
-      client_email: value.clientEmail,
-      barber_id: value.barber?.id,
-      service_id: value.service?.id,
-      appointment_date: value.appointmentDate,
-      appointment_time: String(value.appointmentTime).slice(0, 5),
-      barber_name: value.barber?.name,
-      service_name: value.service?.name,
-      service_duration: value.service?.duration,
-      service_price: Number(value.service?.price),
-      created_at: value.createdAt,
-      updated_at: value.updatedAt,
-    };
-  }
-  if ("isActive" in value) {
-    return { ...value, username: value.email, active: value.isActive ? 1 : 0, created_at: value.createdAt };
-  }
-  if ("price" in value) {
-    return { ...value, price: Number(value.price), active: value.active ? 1 : 0, created_at: value.createdAt, updated_at: value.updatedAt };
-  }
-  if ("active" in value) {
-    return { ...value, active: value.active ? 1 : 0, created_at: value.createdAt, updated_at: value.updatedAt };
-  }
-  return value;
-};
-
-async function rawReq<T>(url: string, opts?: RequestInit, includeAuth = true): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`${BASE}${url}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(includeAuth && accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
-      ...opts,
-    });
-  } catch {
-    throw new ApiError("No se pudo conectar con el servidor.", 0);
-  }
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || data.success === false) {
-    const fallback =
-      res.status === 401 ? "No autorizado. Inicia sesion nuevamente." :
-      res.status === 403 ? "No tienes permiso para realizar esta accion." :
-      res.status >= 500 ? "Error interno del servidor. Intenta nuevamente." :
-      "Error en la solicitud";
-    throw new ApiError(res.status >= 500 ? fallback : data.message || fallback, res.status);
-  }
-  return normalize(data.data);
+interface StaffProfile {
+  id: string;
+  email: string;
+  active: boolean;
+  subscription_expires_at: string | null;
+  created_at: string;
+  user_roles: { role: string } | null;
+  barbers: { id: string; name: string }[];
 }
-
-async function req<T>(url: string, opts?: RequestInit): Promise<T> {
-  try {
-    return await rawReq<T>(url, opts);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 401 && refreshToken && url !== "/login" && url !== "/refresh") {
-      try {
-        const tokens = await rawReq<{ accessToken: string; refreshToken: string }>("/refresh", {
-          method: "POST",
-          body: JSON.stringify({ refreshToken }),
-        }, false);
-        setTokens(tokens);
-        return await rawReq<T>(url, opts);
-      } catch {
-        setTokens(null);
-      }
+async function result<T>(promise: PromiseLike<DbResult<T>>): Promise<T> {
+  const { data, error } = await promise;
+  if (error) throw new ApiError(error.message);
+  return data as T;
+}
+export async function edge<T>(
+  name: string,
+  payload: Record<string, unknown>,
+): Promise<T> {
+  const { data, error } = await supabase.functions.invoke(name, {
+    body: payload,
+  });
+  if (error) {
+    let message = "No se pudo completar la operación. Comprueba tu conexión.";
+    if (error.context instanceof Response) {
+      const b = await error.context.json().catch(() => null);
+      message = b?.message || message;
     }
-    throw error;
+    throw new ApiError(message);
   }
+  return data as T;
 }
-
-// Auth
+type DbAppointment = Appointment & {
+  starts_at: string;
+  barbers?: { name: string } | null;
+};
+export const normalizeAppointment = (a: DbAppointment): Appointment => ({
+  ...a,
+  appointment_date: localDate(a.starts_at),
+  appointment_time: localTime(a.starts_at),
+  barber_name: a.barber_name || a.barbers?.name,
+});
+const active = <T extends { active: number | boolean }>(row: T) => ({
+  ...row,
+  active: Number(row.active),
+});
+export interface Catalog {
+  barbers: Barber[];
+  services: Service[];
+  barber_services: { barber_id: string; service_id: string }[];
+  settings: { shop_name: string; horizon_days: number };
+}
+export const catalogApi = {
+  get: () =>
+    edge<Catalog>("booking", { action: "catalog" }).then((c) => ({
+      ...c,
+      barbers: c.barbers.map(active),
+      services: c.services.map(active),
+    })),
+};
+export interface Slot {
+  barber_id: string;
+  starts_at: string;
+}
+export const privateBookingApi = {
+  get: (token: string) =>
+    edge<Appointment>("booking", { action: "get", token }),
+  cancel: (token: string) =>
+    edge<Appointment>("booking", { action: "cancel", token }),
+  reschedule: (token: string, appointment: Partial<Appointment>) =>
+    edge<Appointment>("booking", { action: "reschedule", token, appointment }),
+  slots: (token: string, date: string) =>
+    edge<Slot[]>("booking", { action: "slots", token, date }),
+};
+export const setTokens = (_tokens: unknown) => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+};
 export const authApi = {
-  login: (username: string, password: string) =>
-    req<{ accessToken: string; refreshToken: string }>("/login", {
-      method: "POST",
-      body: JSON.stringify({ email: username, password }),
+  login: async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw new ApiError(error.message);
+    return null;
+  },
+  logout: async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new ApiError(error.message);
+  },
+  me: async (): Promise<User> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new ApiError("Inicia sesión", 401);
+    const p = await result(
+      supabase.from("profiles").select("*,user_roles(role),barbers(id,name)")
+        .eq("id", session.user.id).single<StaffProfile>(),
+    );
+    if (!p) throw new ApiError("No se encontró el perfil", 403);
+    if (
+      !p.active ||
+      (p.subscription_expires_at &&
+        new Date(p.subscription_expires_at) <= new Date())
+    ) throw new ApiError("Acceso inactivo o vencido", 403);
+    const role = p.user_roles?.role;
+    if (!role || !["admin", "barber"].includes(role)) {
+      throw new ApiError("Tu usuario no tiene un rol asignado", 403);
+    }
+    return {
+      id: p.id,
+      username: p.email,
+      email: p.email,
+      role: role === "admin" ? "Admin" : "Barber",
+      active: Number(p.active),
+      subscriptionExpirationDate: p.subscription_expires_at || undefined,
+      barber_id: p.barbers?.[0]?.id || null,
+      barber_name: p.barbers?.[0]?.name,
+    };
+  },
+  getUsers: async (): Promise<User[]> => {
+    const rows = await result(
+      supabase.from("profiles").select("*,user_roles(role),barbers(id,name)")
+        .order("created_at").returns<StaffProfile[]>(),
+    );
+    return rows.map((p) => ({
+      id: p.id,
+      username: p.email,
+      email: p.email,
+      role: p.user_roles?.role === "admin" ? "Admin" : "Barber",
+      active: Number(p.active),
+      subscriptionExpirationDate: p.subscription_expires_at || undefined,
+      barber_id: p.barbers?.[0]?.id || null,
+      barber_name: p.barbers?.[0]?.name,
+      created_at: p.created_at,
+    }));
+  },
+  createUser: (b: Partial<User> & { password: string }) =>
+    edge<User>("admin-users", {
+      action: "create",
+      email: b.username,
+      password: b.password,
+      role: b.role,
+      barber_id: b.barber_id,
     }),
-  refresh: () => req<{ accessToken: string; refreshToken: string }>("/refresh", {
-    method: "POST",
-    body: JSON.stringify({ refreshToken }),
-  }),
-  logout: () => req<void>("/logout", { method: "POST" }),
-  me: () => req<User>("/users/me"),
-  getUsers: () => req<User[]>("/users"),
-  createUser: (body: Partial<User> & { password: string }) =>
-    req<User>(body.role === "Admin" ? "/admin/register" : "/register", {
-      method: "POST",
-      body: JSON.stringify({ email: body.username, password: body.password }),
+  updateUser: (id: string, b: Partial<User>) =>
+    edge<User>("admin-users", {
+      action: "update",
+      id,
+      active: Boolean(b.active),
+      barber_id: b.barber_id,
     }),
-  updateUser: (id: string, body: Partial<User> & { password?: string }) =>
-    req<User>(`/users/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ isActive: Boolean(body.active) }),
-    }),
-  updateSubscriptionExpiration: (id: string, subscriptionExpirationDate: string) =>
-    req<User>(`/users/${id}/subscription-expiration`, {
-      method: "PATCH",
-      body: JSON.stringify({ subscriptionExpirationDate }),
+  updateSubscriptionExpiration: (id: string, date: string) =>
+    edge<User>("admin-users", {
+      action: "update",
+      id,
+      subscription_expires_at: date || null,
     }),
   deleteUser: (id: string) =>
-    req<void>(`/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ isActive: false }) }),
+    edge<void>("admin-users", { action: "update", id, active: false }),
 };
-
-// Barbers
-export const barbersApi = {
-  getAll: () => req<Barber[]>("/barbers"),
-  getAllAdmin: () => req<Barber[]>("/barbers/all"),
-  getById: (id: string) => req<Barber>(`/barbers/${id}`),
-  create: (body: Partial<Barber>) =>
-    req<Barber>("/barbers", { method: "POST", body: JSON.stringify(normalizeActivePayload(body)) }),
-  update: (id: string, body: Partial<Barber>) =>
-    req<Barber>(`/barbers/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(normalizeActivePayload(body)),
-    }),
-  remove: (id: string) => req<void>(`/barbers/${id}`, { method: "DELETE" }),
-};
-
-// Services
-export const servicesApi = {
-  getAll: () => req<Service[]>("/services"),
-  getAllAdmin: () => req<Service[]>("/services/all"),
-  getById: (id: string) => req<Service>(`/services/${id}`),
-  create: (body: Partial<Service>) =>
-    req<Service>("/services", { method: "POST", body: JSON.stringify(normalizeActivePayload(body)) }),
-  update: (id: string, body: Partial<Service>) =>
-    req<Service>(`/services/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(normalizeActivePayload(body)),
-    }),
-  remove: (id: string) => req<void>(`/services/${id}`, { method: "DELETE" }),
-};
-
-// Appointments
+function catalogCrud<T extends Barber | Service>(
+  table: "barbers" | "services",
+) {
+  const payload = (b: Partial<T>) => {
+    const allowed = table === "barbers"
+      ? ["name", "specialty", "phone", "email", "active"]
+      : ["name", "description", "duration", "price", "category", "active"];
+    return Object.fromEntries(
+      Object.entries(b).filter(([k]) => allowed.includes(k)).map((
+        [k, v],
+      ) => [k, k === "active" ? Boolean(Number(v)) : v]),
+    );
+  };
+  return {
+    getAll: async (): Promise<T[]> => {
+      const c = await catalogApi.get();
+      return c[table] as T[];
+    },
+    getAllAdmin: async (): Promise<T[]> => {
+      const rows = await result(supabase.from(table).select("*").order("name"));
+      return rows.map(active) as T[];
+    },
+    getById: async (id: string): Promise<T> =>
+      active(
+        await result(supabase.from(table).select("*").eq("id", id).single()),
+      ) as T,
+    create: async (b: Partial<T>): Promise<T> =>
+      active(
+        await result(supabase.from(table).insert(payload(b)).select().single()),
+      ) as T,
+    update: async (id: string, b: Partial<T>): Promise<T> =>
+      active(
+        await result(
+          supabase.from(table).update(payload(b)).eq("id", id).select()
+            .single(),
+        ),
+      ) as T,
+    remove: async (id: string) => {
+      await result(supabase.from(table).update({ active: false }).eq("id", id));
+    },
+  };
+}
+export const barbersApi = catalogCrud<Barber>("barbers");
+export const servicesApi = catalogCrud<Service>("services");
 export const appointmentsApi = {
-  getAll: (params?: Record<string, string>) => {
-    const qs = params ? "?" + new URLSearchParams(params).toString() : "";
-    return req<Appointment[]>(`/appointments${qs}`);
+  getAll: async (
+    params: Record<string, string> = {},
+  ): Promise<Appointment[]> => {
+    let q = supabase.from("appointments").select("*,barbers(name)").order(
+      "starts_at",
+    );
+    if (params.date) {
+      q = q.gte("starts_at", `${params.date}T00:00:00-06:00`).lte(
+        "starts_at",
+        `${params.date}T23:59:59.999-06:00`,
+      );
+    }
+    if (params.status) q = q.eq("status", params.status);
+    if (params.barber_id) q = q.eq("barber_id", params.barber_id);
+    return (await result(q)).map(normalizeAppointment);
   },
-  getById: (id: string) => req<Appointment>(`/appointments/${id}`),
-  getAvailableSlots: (params: {
-    barber_id: string;
-    date: string;
-    service_id?: string;
-  }) =>
-    req<string[]>(
-      `/appointments/available-slots?${new URLSearchParams(params).toString()}`,
+  getById: async (id: string) =>
+    normalizeAppointment(
+      await result(
+        supabase.from("appointments").select("*,barbers(name)").eq("id", id)
+          .single(),
+      ),
     ),
-  create: (body: Partial<Appointment>) =>
-    req<Appointment>("/appointments", {
-      method: "POST",
-      body: JSON.stringify(toAppointmentPayload(body)),
+  getAvailableSlots: async (
+    params: { barber_id: string; date: string; service_id?: string },
+  ) => {
+    const slots = await edge<Slot[]>("booking", {
+      action: "slots",
+      ...params,
+      barber_id: params.barber_id === "any" ? null : params.barber_id,
+    });
+    return [...new Set(slots.map((s) => localTime(s.starts_at)))].sort();
+  },
+  create: (b: Partial<Appointment>) =>
+    edge<Appointment>("booking", {
+      action: "create",
+      appointment: {
+        ...b,
+        barber_id: b.barber_id === "any" ? null : b.barber_id,
+      },
     }),
-  update: (id: string, body: Partial<Appointment>) =>
-    req<Appointment>(`/appointments/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(toAppointmentPayload(body)),
-    }),
-  updateStatus: (id: string, status: string) =>
-    req<void>(`/appointments/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    }),
-  cancel: (id: string) =>
-    req<void>(`/appointments/${id}`, { method: "DELETE" }),
-  getStats: () => req<AppStats>("/appointments/stats"),
+  update: async (id: string, b: Partial<Appointment>): Promise<Appointment> =>
+    result(supabase.rpc("staff_update_appointment", { p_id: id, p_body: b })),
+  updateStatus: async (id: string, status: string) => {
+    await result(
+      supabase.rpc("staff_update_appointment", {
+        p_id: id,
+        p_body: { status },
+      }),
+    );
+  },
+  cancel: async (id: string) => {
+    await result(
+      supabase.rpc("staff_update_appointment", {
+        p_id: id,
+        p_body: { status: "cancelled" },
+      }),
+    );
+  },
+  getStats: async (): Promise<AppStats> =>
+    result(supabase.rpc("appointment_stats")),
 };

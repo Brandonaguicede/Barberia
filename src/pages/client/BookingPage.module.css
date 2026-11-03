@@ -1,253 +1,67 @@
-.page { display: flex; flex-direction: column; gap: 26px; }
 
-.hero { text-align: center; padding: 10px 0 4px; }
-
-.heroMark {
-  display: inline-flex;
-  margin-bottom: 10px;
-  color: var(--gold);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-}
-
-.heroTitle {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(34px, 5vw, 52px);
-  color: var(--text);
-  margin-bottom: 10px;
-  letter-spacing: 0;
-}
-
-.heroSub {
-  color: var(--text-muted);
-  font-size: 15px;
-  max-width: 560px;
-  margin: 0 auto;
-}
-
-.stepper { display: flex; align-items: center; justify-content: center; gap: 0; padding: 4px 0 2px; }
-.stepItem { display: flex; align-items: center; gap: 8px; position: relative; }
-
-.stepCircle {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid var(--border-light);
-  background: #101010;
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.stepLabel { font-size: 12px; color: var(--text-muted); font-weight: 700; transition: color 0.2s; }
-
-.stepLine {
-  width: 48px;
-  height: 1px;
-  background: var(--border);
-  margin: 0 8px;
-  transition: background 0.3s;
-}
-
-.stepLineDone { background: var(--gold-dim); }
-.stepActive .stepCircle { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold); box-shadow: 0 10px 28px rgba(0,0,0,0.32); }
-.stepActive .stepLabel { color: var(--gold); }
-.stepDone .stepCircle { border-color: var(--gold); background: var(--gold); color: #080808; }
-.stepDone .stepLabel { color: var(--text); }
-
-.card {
-  background: linear-gradient(180deg, #141414 0%, #0f0f0f 100%);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  box-shadow: 0 22px 70px rgba(0,0,0,0.42);
-  overflow: hidden;
-}
-
-.stepContent { padding: 30px; }
-
-.stepTitle {
-  font-family: 'Playfair Display', serif;
-  font-size: 24px;
-  margin-bottom: 26px;
-  color: var(--text);
-  letter-spacing: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.stepTitle svg { color: var(--gold); }
-
-.section { margin-top: 24px; }
-.sectionLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
-
-.barberGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
-
-.barberCard {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 86px;
-  padding: 16px;
-  background: #181818;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  text-align: left;
-  transition: all 0.15s;
-  position: relative;
-}
-
-.barberCard:hover { border-color: rgba(201,168,76,0.38); background: #1d1d1d; }
-.barberCard.selected { border-color: rgba(201,168,76,0.72); background: linear-gradient(180deg, rgba(201,168,76,0.11), rgba(201,168,76,0.04)); }
-
-.barberAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #0d0d0d;
-  border: 1px solid rgba(201,168,76,0.45);
-  color: var(--gold-light);
-  font-weight: 800;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.barberInfo { flex: 1; }
-.barberName { display: block; font-weight: 700; font-size: 15px; color: var(--text); }
-.barberSpec { display: block; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
-.serviceGroup { margin-bottom: 16px; }
-.categoryLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--gold);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-.serviceList { display: flex; flex-direction: column; gap: 8px; }
-
-.serviceCard {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 76px;
-  padding: 14px 16px;
-  background: #171717;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  text-align: left;
-  transition: all 0.15s;
-  position: relative;
-}
-
-.serviceCard:hover { border-color: rgba(201,168,76,0.38); background: #1d1d1d; }
-.serviceCard.selected { border-color: rgba(201,168,76,0.72); background: linear-gradient(180deg, rgba(201,168,76,0.1), rgba(201,168,76,0.035)); }
-.serviceInfo { flex: 1; min-width: 0; }
-.serviceName { display: block; font-weight: 700; font-size: 14px; color: var(--text); }
-.serviceDesc { display: block; font-size: 12px; color: var(--text-muted); margin-top: 4px; max-width: 48ch; }
-.serviceMeta { text-align: right; flex-shrink: 0; }
-.servicePrice { display: block; font-weight: 800; color: var(--gold); font-size: 14px; }
-.serviceDuration {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.checkMark {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--gold);
-  color: #080808;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.slotsLoading { padding: 20px; display: flex; justify-content: center; }
-.noSlots { color: var(--text-muted); font-size: 14px; padding: 12px 0; }
-.slotsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
-
-.slotBtn {
-  padding: 12px 10px;
-  background: #171717;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 700;
-  transition: all 0.15s;
-}
-
-.slotBtn:hover { border-color: rgba(201,168,76,0.45); color: var(--text); background: #1d1d1d; }
-.slotBtn.selected { background: var(--gold); border-color: var(--gold); color: #080808; font-weight: 800; }
-
-.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-.summary { background: #171717; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
-.summaryRow { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 18px; gap: 12px; }
-.summaryRow:nth-child(even) { background: rgba(255,255,255,0.02); }
-.summaryKey { font-size: 12px; color: var(--text-muted); font-weight: 600; flex-shrink: 0; }
-.summaryVal { font-size: 14px; color: var(--text); text-align: right; }
-.gold { color: var(--gold) !important; font-weight: 800; }
-.summaryDivider { height: 1px; background: var(--border); margin: 4px 0; }
-
-.actions { display: flex; align-items: center; gap: 12px; padding: 18px 30px 26px; border-top: 1px solid rgba(255,255,255,0.08); }
-
-.btnBack {
-  padding: 11px 20px;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.14);
-  color: var(--text-muted);
-  border-radius: var(--radius);
-  font-size: 14px;
-  transition: all 0.15s;
-}
-
-.btnBack:hover { color: var(--text); border-color: var(--text-muted); }
-
-.btnNext,
-.btnConfirm {
-  padding: 12px 30px;
-  background: var(--gold);
-  color: #080808;
-  border-radius: var(--radius);
-  font-size: 14px;
-  font-weight: 800;
-  transition: all 0.15s;
-}
-
-.btnNext:hover:not(:disabled),
-.btnConfirm:hover:not(:disabled) {
-  background: var(--gold-light);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(201,168,76,0.28);
-}
-
-.btnNext:disabled,
-.btnConfirm:disabled { opacity: 0.45; cursor: not-allowed; }
-
-@media (max-width: 680px) {
-  .stepper { justify-content: flex-start; overflow-x: auto; padding-bottom: 8px; }
-  .stepLine { width: 24px; }
-  .stepContent { padding: 22px; }
-  .actions { padding: 16px 22px 22px; }
-  .barberGrid, .formGrid { grid-template-columns: 1fr; }
-}
+.page { display:flex; flex-direction:column; gap:28px; }
+.hero { display:grid; grid-template-columns:1.15fr 1fr; gap:40px; align-items:end; padding:24px 0 14px; }
+.heroTitle { font-family:var(--font-display); font-size:clamp(36px,4.5vw,58px); line-height:1.08; font-weight:800; letter-spacing:-.04em; color:var(--text); max-width:8ch; }
+.heroTitle span { color:var(--accent); }
+.heroSub { color:var(--text-muted); font-size:15px; line-height:1.8; max-width:35ch; padding-bottom:3px; }
+.stepper { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:8px 0 18px; border-bottom:1px solid var(--border); }
+.stepItem { display:flex; gap:10px; align-items:center; min-width:0; }
+.stepCircle { width:30px; height:30px; border-radius:9px; border:1px solid var(--border-light); color:var(--text-dim); display:grid; place-items:center; font-size:12px; font-weight:700; flex-shrink:0; }
+.stepLabel { color:var(--text-dim); font-size:12px; font-weight:650; }
+.stepActive .stepCircle { border-color:var(--primary); background:var(--primary); color:var(--on-primary); }
+.stepActive .stepLabel { color:var(--text); }
+.stepDone .stepCircle { border-color:var(--accent-dim); color:var(--accent-light); background:var(--selection); }
+.stepDone .stepLabel { color:var(--text-muted); }
+.stepLine { display:none; }
+.card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+.stepContent { padding:32px; }
+.stepTitle { display:flex; align-items:center; gap:10px; color:var(--text); font-size:22px; font-weight:750; letter-spacing:-.025em; margin-bottom:26px; }
+.stepTitle svg { color:var(--accent); }
+.section { margin-top:28px; }
+.sectionLabel { color:var(--text-muted); font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:14px; }
+.serviceGroup { margin-bottom:22px; }
+.categoryLabel { display:flex; gap:7px; align-items:center; color:var(--text-dim); font-size:12px; font-weight:650; margin:0 0 8px; }
+.categoryLabel svg { color:var(--accent); }
+.serviceList { display:flex; flex-direction:column; }
+.serviceCard { display:flex; align-items:center; gap:16px; width:100%; padding:20px 16px; background:transparent; color:var(--text); border:1px solid transparent; border-bottom-color:var(--border); text-align:left; border-radius:0; min-height:84px; transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out); }
+.serviceCard:last-child { border-bottom-color:transparent; }
+.serviceCard.selected { background:var(--selection); border-color:var(--accent-dim); border-radius:10px; }
+.serviceInfo { flex:1; min-width:0; }
+.serviceName { display:block; font-size:15px; font-weight:700; color:var(--text); }
+.serviceDesc { display:block; font-size:12px; line-height:1.7; color:var(--text-muted); margin-top:4px; max-width:46ch; }
+.serviceMeta { text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums; }
+.servicePrice { display:block; color:var(--text); font-size:16px; font-weight:750; }
+.serviceDuration { display:inline-flex; align-items:center; justify-content:flex-end; gap:5px; color:var(--text-dim); font-size:11px; margin-top:5px; }
+.serviceCard.selected .servicePrice { color:var(--accent-light); }
+.checkMark { display:grid; place-items:center; width:23px; height:23px; border-radius:50%; background:var(--primary); color:var(--on-primary); flex-shrink:0; }
+.barberGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+.barberCard { display:flex; align-items:center; gap:12px; min-height:86px; padding:16px; background:transparent; color:var(--text); border:1px solid var(--border-light); border-radius:12px; text-align:left; transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out); }
+.barberCard.selected { background:var(--selection); border-color:var(--accent-dim); }
+.barberAvatar { width:40px; height:40px; display:grid; place-items:center; color:var(--accent); flex-shrink:0; }
+.barberInfo { flex:1; min-width:0; }
+.barberName { display:block; color:var(--text); font-size:13px; font-weight:700; line-height:1.5; }
+.barberSpec { display:block; color:var(--text-dim); font-size:11px; margin-top:4px; }
+.slotsLoading { padding:24px; display:flex; justify-content:center; }
+.noSlots { color:var(--text-muted); font-size:14px; padding:16px 0; }
+.slotsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(106px,1fr)); gap:12px; }
+.slotBtn { padding:14px 10px; border:1px solid var(--border-light); border-radius:10px; background:transparent; color:var(--text); font-size:13px; font-weight:650; font-variant-numeric:tabular-nums; }
+.slotBtn.selected { background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.formGrid { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.summary { padding:6px 0; }
+.summaryRow { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding:14px 0; border-bottom:1px solid var(--border); }
+.summaryKey { color:var(--text-muted); font-size:13px; }
+.summaryVal { color:var(--text); text-align:right; font-size:14px; font-weight:650; }
+.gold { color:var(--accent-light); }
+.summaryDivider { height:16px; }
+.actions { display:flex; align-items:center; gap:12px; padding:22px 32px; border-top:1px solid var(--border); }
+.btnBack { padding:13px 20px; background:transparent; color:var(--text-muted); border:1px solid var(--border-light); border-radius:var(--radius); font-size:13px; }
+.btnNext,.btnConfirm { min-height:46px; padding:13px 30px; border-radius:var(--radius); background:var(--primary); color:var(--on-primary); font-size:13px; font-weight:750; }
+.btnNext:disabled,.btnConfirm:disabled { opacity:.45; cursor:not-allowed; }
+@media (hover:hover) and (pointer:fine) { .barberCard:hover,.serviceCard:hover { background:var(--bg-elevated); border-color:var(--accent-dim); } .btnNext:hover:not(:disabled),.btnConfirm:hover:not(:disabled) { background:var(--primary-hover); } .slotBtn:hover { border-color:var(--accent); } .btnBack:hover { color:var(--text); } }
+@media(max-width:680px) { .page { gap:22px; } .hero { grid-template-columns:1fr; gap:16px; padding:14px 0 4px; } .heroTitle { max-width:12ch; font-size:40px; } .heroSub { font-size:13px; max-width:40ch; } .stepper { gap:8px; } .stepItem { flex-direction:column; align-items:flex-start; gap:8px; } .stepLabel { font-size:11px; } .stepContent { padding:24px 20px; } .stepTitle { font-size:20px; margin-bottom:20px; } .serviceCard { padding:17px 10px; gap:10px; } .serviceName { font-size:14px; } .servicePrice { font-size:14px; } .serviceCard .checkMark { width:19px; height:19px; } .barberGrid,.formGrid { grid-template-columns:1fr; } .actions { padding:20px; } .btnNext,.btnConfirm { padding:13px 22px; } }
+/* Smoked glass over the reference charcoal palette. */
+.card { background:linear-gradient(125deg,#ffffff0a,#ffffff02),rgb(30 30 30 / .88); border:1px solid #ffffff22; border-top-color:#ffffff36; box-shadow:inset 0 1px 0 #ffffff08,0 24px 64px #09090925; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); }
+.barberCard { background:#ffffff03; }
+.serviceCard.selected,.barberCard.selected { background:var(--selection); border-color:var(--accent-dim); }
+.actions { background:#ffffff03; }
+@media(max-width:680px) { .card { backdrop-filter:none; -webkit-backdrop-filter:none; background:linear-gradient(125deg,#282828,#1d1d1d); } }

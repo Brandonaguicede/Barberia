@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import toast from 'react-hot-toast'
+import toast from '../../services/toast'
 import { barbersApi } from '../../services/api'
 import type { Barber } from '../../types'
 import Modal from '../../components/shared/Modal'

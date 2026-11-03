@@ -4,20 +4,20 @@
 .loader { display: flex; justify-content: center; padding: 60px; }
 
 .header { display: flex; align-items: center; justify-content: space-between; }
-.title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); }
+.title { font-family: var(--font-display); font-size: 28px; color: var(--text); }
 
 .btnNew {
   padding: 10px 20px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
-.btnNew:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btnNew:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
 /* Cards grid */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
@@ -40,8 +40,8 @@
 .avatar {
   width: 52px; height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--gold-dim), var(--gold));
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   font-weight: 700;
   font-size: 16px;
   display: flex;
@@ -82,10 +82,10 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
-.btnEdit:hover { border-color: var(--gold-dim); color: var(--gold); }
+.btnEdit:hover { border-color: var(--accent-dim); color: var(--accent); }
 
 .btnDeactivate {
   padding: 8px 12px;
@@ -95,8 +95,8 @@
   color: var(--text-dim);
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
 .btnDeactivate:hover { border-color: var(--red); color: var(--red); }
 
@@ -111,12 +111,12 @@
   padding: 10px 14px;
   color: var(--text);
   font-size: 14px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   outline: none;
   appearance: none;
   cursor: pointer;
 }
-.stateSelect:focus { border-color: var(--gold-dim); }
+.stateSelect:focus { border-color: var(--accent-dim); }
 .stateSelect option { background: var(--bg-card); }
 
 .modalActions {
@@ -135,22 +135,22 @@
   color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
 .btnCancel:hover { color: var(--text); }
 
 .btnSave {
   padding: 10px 24px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
-.btnSave:hover:not(:disabled) { background: var(--gold-light); }
+.btnSave:hover:not(:disabled) { background: var(--primary-hover); }
 .btnSave:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -30,7 +30,13 @@ export interface Appointment {
   service_id: string;
   appointment_date: string;
   appointment_time: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: AppointmentStatus;
+  starts_at?: string;
+  ends_at?: string;
+  access_token?: string;
+  shop_name?: string;
+  can_cancel?: boolean;
+  can_reschedule?: boolean;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -50,7 +56,7 @@ export interface AppStats {
 export interface User {
   id: string;
   username: string;
-  role: 'Admin' | 'Subscription_L1';
+  role: 'Admin' | 'Barber';
   email?: string;
   isActive?: boolean;
   subscriptionExpirationDate?: string;
@@ -59,4 +65,4 @@ export interface User {
   active?: number;
 }
 
-export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';

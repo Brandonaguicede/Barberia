@@ -1,8 +1,9 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import { CalendarDays, LayoutDashboard, LogOut, Scissors, Settings, UserRound, UsersRound } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '../../services/toast'
 import { useAuth } from '../../context/AuthContext'
 import styles from './AdminLayout.module.css'
+import NotificationCenter from './NotificationCenter'
 import logo from '../../imagenes/logo2.png'
 
 export default function AdminLayout() {
@@ -23,6 +24,7 @@ export default function AdminLayout() {
     { to: '/admin/citas', icon: CalendarDays, label: isAdmin ? 'Citas' : 'Mis citas', end: false, adminOnly: false },
     { to: '/admin/barberos', icon: Scissors, label: 'Barberos', end: false, adminOnly: true },
     { to: '/admin/servicios', icon: Settings, label: 'Servicios', end: false, adminOnly: true },
+    { to: '/admin/configuracion', icon: Settings, label: 'Configuración', end: false, adminOnly: false },
     { to: '/admin/usuarios', icon: UsersRound, label: 'Usuarios', end: false, adminOnly: true },
   ].filter(item => !item.adminOnly || isAdmin)
 
@@ -45,6 +47,7 @@ export default function AdminLayout() {
                   key={item.to}
                   to={item.to}
                   end={item.end}
+                  aria-label={item.label}
                   className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
                 >
                   <span className={styles.navIcon}><Icon size={18} strokeWidth={2} /></span>
@@ -60,7 +63,7 @@ export default function AdminLayout() {
             <div className={styles.userAvatar}><UserRound size={17} strokeWidth={2} /></div>
             <div className={styles.userMeta}>
               <span className={styles.userName}>{displayName}</span>
-              <span className={styles.userRole}>{user?.role === 'Admin' ? 'Administrador' : 'Subscription_L1'}</span>
+              <span className={styles.userRole}>{user?.role === 'Admin' ? 'Administrador' : 'Barbero'}</span>
             </div>
           </div>
 
@@ -75,6 +78,7 @@ export default function AdminLayout() {
       </aside>
 
       <main className={styles.main}>
+        <NotificationCenter />
         <Outlet />
       </main>
     </div>

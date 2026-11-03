@@ -42,7 +42,7 @@
 }
 
 .title {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 20px;
   color: var(--text);
 }
@@ -59,7 +59,7 @@
   justify-content: center;
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
 .closeBtn:hover { background: var(--border-light); color: var(--text); }
 

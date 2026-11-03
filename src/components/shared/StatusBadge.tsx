@@ -6,6 +6,7 @@ const labels: Record<AppointmentStatus, string> = {
   confirmed: 'Confirmada',
   completed: 'Completada',
   cancelled: 'Cancelada',
+  no_show: 'No asistió',
 }
 
 export default function StatusBadge({ status }: { status: AppointmentStatus }) {

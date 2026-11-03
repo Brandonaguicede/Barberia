@@ -14,3 +14,4 @@
 .confirmed { background: rgba(91,156,246,0.15); color: var(--blue); }
 .completed { background: rgba(76,175,125,0.15); color: var(--green); }
 .cancelled { background: rgba(224,85,85,0.12); color: var(--red); }
+.no_show { background: var(--bg-elevated); color: var(--text-muted); }

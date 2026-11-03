@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import toast from 'react-hot-toast'
+import toast from '../../services/toast'
 import { appointmentsApi, barbersApi, servicesApi } from '../../services/api'
+import { localDate } from '../../utils/booking'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import type { Appointment, Barber, Service, AppointmentStatus } from '../../types'
 import Modal from '../../components/shared/Modal'
@@ -13,6 +15,7 @@ const STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] = [
   { value: 'confirmed', label: 'Confirmada' },
   { value: 'completed', label: 'Completada' },
   { value: 'cancelled', label: 'Cancelada'  },
+  { value: 'no_show', label: 'No asistió' },
 ]
 
 interface ApptForm {
@@ -26,11 +29,14 @@ const emptyForm = (): ApptForm => ({
   client_name: '', client_phone: '', client_email: '',
   barber_id: '', service_id: '',
   appointment_date: '', appointment_time: '',
-  status: 'pending', notes: '',
+  status: 'confirmed', notes: '',
 })
 
 export default function AdminAppointments() {
   const { user, isAdmin } = useAuth()
+  const [searchParams] = useSearchParams()
+  const [selected, setSelected] = useState<Appointment | null>(null)
+  useEffect(() => { const id = searchParams.get('appointment'); if (id) appointmentsApi.getById(id).then(setSelected).catch(() => toast.error('No se pudo abrir esta cita')) }, [searchParams])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [barbers,      setBarbers]      = useState<Barber[]>([])
   const [services,     setServices]     = useState<Service[]>([])
@@ -59,11 +65,11 @@ export default function AdminAppointments() {
     setLoading(false)
   }, [filterStatus, filterDate, filterBarber, isAdmin])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
+  useEffect(() => { fetchAll(); const refresh = () => { void fetchAll() }; window.addEventListener('appointments:changed', refresh); return () => window.removeEventListener('appointments:changed', refresh) }, [fetchAll])
 
   useEffect(() => {
     Promise.all([barbersApi.getAll(), servicesApi.getAll()])
-      .then(([b, s]) => { setBarbers(b); setServices(s) })
+      .then(([b, s]) => { setBarbers(b); setServices(s) }).catch(() => toast.error('No se pudo cargar el catálogo'))
   }, [])
 
   useEffect(() => {
@@ -153,7 +159,7 @@ export default function AdminAppointments() {
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 }).format(p)
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDate()
 
   return (
     <div className={styles.page}>
@@ -162,6 +168,7 @@ export default function AdminAppointments() {
         <button className={styles.btnNew} onClick={openCreate}>+ Nueva cita</button>
       </div>
 
+      {selected && <Modal title="Detalle de cita" onClose={() => setSelected(null)}><p>{selected.client_name} · {selected.client_phone}</p><p>{selected.service_name} con {selected.barber_name}</p><p>{selected.appointment_date} a las {selected.appointment_time}</p><StatusBadge status={selected.status}/><p>{selected.notes}</p></Modal>}
       {/* Filters */}
       <div className={styles.filters}>
         <input
@@ -218,7 +225,7 @@ export default function AdminAppointments() {
                   <td>{formatTime(a.appointment_time)}</td>
                   <td className={styles.price}>{formatPrice(a.service_price!)}</td>
                   <td>
-                    {isAdmin ? (
+                    {(isAdmin || a.status === 'confirmed') ? (
                       <select
                         className={styles.statusSelect}
                         value={a.status}
@@ -241,7 +248,7 @@ export default function AdminAppointments() {
                         <button className={styles.btnCancel} onClick={() => handleCancel(a.id)} title="Cancelar">✕</button>
                       )}
                       {!isAdmin && (
-                        <StatusBadge status={a.status} />
+                        <button className={styles.btnEdit} onClick={() => setSelected(a)}>Ver detalle</button>
                       )}
                     </div>
                   </td>

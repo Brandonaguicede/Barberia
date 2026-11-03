@@ -11,3 +11,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </React.StrictMode>,
 )
+
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { void navigator.serviceWorker.register('/sw.js').catch(() => { /* The booking flow remains available without push. */ }) }) }

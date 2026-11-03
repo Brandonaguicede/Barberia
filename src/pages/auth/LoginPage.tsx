@@ -32,19 +32,19 @@ export default function LoginPage() {
       <section className={styles.card}>
         <div className={styles.logoWrap}>
           <img src={logo} alt="Angel Barber-Shops" className={styles.logo} />
-          <p className={styles.kicker}>Panel privado</p>
           <h1 className={styles.title}>Acceso administrativo</h1>
           <p className={styles.subtitle}>Ingresa con tus credenciales para gestionar citas, servicios y usuarios.</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
-            <label className={styles.label}>Correo</label>
+            <label className={styles.label} htmlFor="login-email">Correo</label>
             <div className={styles.inputWrap}>
               <Mail size={17} strokeWidth={1.9} className={styles.inputIcon} aria-hidden="true" />
               <input
                 className={styles.input}
                 type="email"
+                id="login-email"
                 placeholder="admin@barbershop.test"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
@@ -56,12 +56,13 @@ export default function LoginPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Contrasena</label>
+            <label className={styles.label} htmlFor="login-password">Contraseña</label>
             <div className={styles.inputWrap}>
               <LockKeyhole size={17} strokeWidth={1.9} className={styles.inputIcon} aria-hidden="true" />
               <input
                 className={styles.input}
                 type="password"
+                id="login-password"
                 placeholder="Ingresa tu contrasena"
                 value={password}
                 onChange={e => setPassword(e.target.value)}

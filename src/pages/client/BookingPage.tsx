@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import toast from '../../services/toast'
 import { CalendarDays, Check, Clock3, Scissors, Sparkles, UserRound } from 'lucide-react'
-import { barbersApi, servicesApi, appointmentsApi } from '../../services/api'
+import { localDate } from '../../utils/booking'
+import { catalogApi, appointmentsApi } from '../../services/api'
 import type { Barber, Service } from '../../types'
 import { FormField, Input, TextArea } from '../../components/shared/FormField'
 import styles from './BookingPage.module.css'
@@ -34,33 +35,40 @@ export default function BookingPage() {
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [slots, setSlots] = useState<string[]>([])
+  const [loadError, setLoadError] = useState('')
+  const [links, setLinks] = useState<{barber_id:string;service_id:string}[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<FormData>({
-    barber_id: '', service_id: '', appointment_date: '',
+    barber_id: 'any', service_id: '', appointment_date: '',
     appointment_time: '', client_name: '', client_phone: '',
     client_email: '', notes: '',
   })
 
   useEffect(() => {
-    Promise.all([barbersApi.getAll(), servicesApi.getAll()])
-      .then(([b, s]) => { setBarbers(b); setServices(s) })
-      .catch(() => toast.error('Error al cargar datos'))
+    let live = true
+    catalogApi.get()
+      .then(c => { if (live) { setBarbers(c.barbers); setServices(c.services); setLinks(c.barber_services) } })
+      .catch(e => { if (live) setLoadError(e.message) })
+    return () => { live = false }
   }, [])
 
   useEffect(() => {
+    let live = true
+    setSlots([])
+    setForm(f => ({ ...f, appointment_time: '' }))
     if (form.barber_id && form.appointment_date && form.service_id) {
       setLoadingSlots(true)
-      setForm(f => ({ ...f, appointment_time: '' }))
       appointmentsApi.getAvailableSlots({
         barber_id: form.barber_id,
         date: form.appointment_date,
         service_id: form.service_id,
       })
-        .then(setSlots)
+        .then(s => { if (live) setSlots(s) })
         .catch(() => toast.error('Error al cargar horarios'))
-        .finally(() => setLoadingSlots(false))
+        .finally(() => { if (live) setLoadingSlots(false) })
     }
+    return () => { live = false }
   }, [form.barber_id, form.appointment_date, form.service_id])
 
   const set = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -69,13 +77,14 @@ export default function BookingPage() {
   const selectedBarber = barbers.find(b => b.id === form.barber_id)
   const selectedService = services.find(s => s.id === form.service_id)
 
-  const servicesByCategory = services.reduce<Record<string, Service[]>>((acc, s) => {
+  const eligibleServices = services.filter(s => form.barber_id === 'any' ? links.some(l => l.service_id === s.id) : links.some(l => l.barber_id === form.barber_id && l.service_id === s.id))
+  const servicesByCategory = eligibleServices.reduce<Record<string, Service[]>>((acc, s) => {
     if (!acc[s.category]) acc[s.category] = []
     acc[s.category].push(s)
     return acc
   }, {})
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDate()
 
   const formatTime = (t: string) => {
     const [h, m] = t.split(':').map(Number)
@@ -90,7 +99,7 @@ export default function BookingPage() {
   const canGoNext = () => {
     if (step === 1) return !!form.barber_id && !!form.service_id
     if (step === 2) return !!form.appointment_date && !!form.appointment_time
-    if (step === 3) return !!form.client_name && !!form.client_phone
+    if (step === 3) return form.client_name.trim().length > 0 && /^\+?[0-9 ()-]{8,25}$/.test(form.client_phone)
     return false
   }
 
@@ -98,13 +107,8 @@ export default function BookingPage() {
     setSubmitting(true)
     try {
       const appt = await appointmentsApi.create(form)
-      toast.success(
-        form.client_email
-          ? 'Cita realizada. Se enviara la confirmacion al correo indicado.'
-          : 'Cita realizada correctamente.',
-        { duration: 5000 }
-      )
-      navigate('/confirmacion', { state: { appointment: appt } })
+      toast.success('Cita confirmada')
+      navigate(`/mi-cita/${appt.access_token}`, { replace: true })
     } catch (err: any) {
       toast.error(err.message || 'Error al agendar la cita')
     } finally {
@@ -117,18 +121,18 @@ export default function BookingPage() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
-        <span className={styles.heroMark}>ANGEL BARBER-SHOPS</span>
-        <h1 className={styles.heroTitle}>Reserva tu cita</h1>
+        <h1 className={styles.heroTitle}>Reserva tu <span>cita.</span></h1>
         <p className={styles.heroSub}>Selecciona el profesional, el servicio y el horario que mejor se ajuste a tu agenda.</p>
       </div>
 
+      {loadError && <p role="alert">{loadError}. Comprueba la configuración y recarga la página.</p>}
       <div className={styles.stepper}>
         {steps.map((label, i) => {
           const n = (i + 1) as Step
           const active = step === n
           const done = step > n
           return (
-            <div key={n} className={`${styles.stepItem} ${active ? styles.stepActive : ''} ${done ? styles.stepDone : ''}`}>
+            <div key={n} aria-current={active ? 'step' : undefined} className={`${styles.stepItem} ${active ? styles.stepActive : ''} ${done ? styles.stepDone : ''}`}>
               <div className={styles.stepCircle}>{done ? <Check size={15} strokeWidth={2.4} /> : n}</div>
               <span className={styles.stepLabel}>{label}</span>
               {i < steps.length - 1 && <div className={`${styles.stepLine} ${done ? styles.stepLineDone : ''}`} />}
@@ -140,22 +144,7 @@ export default function BookingPage() {
       <div className={styles.card}>
         {step === 1 && (
           <div className={styles.stepContent}>
-            <h2 className={styles.stepTitle}>Elige barbero y servicio</h2>
-            <div className={styles.section}>
-              <p className={styles.sectionLabel}>Barbero</p>
-              <div className={styles.barberGrid}>
-                {barbers.map(b => (
-                  <button key={b.id} className={`${styles.barberCard} ${form.barber_id === b.id ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, barber_id: b.id }))}>
-                    <div className={styles.barberAvatar}><Scissors size={21} strokeWidth={1.9} /></div>
-                    <div className={styles.barberInfo}>
-                      <span className={styles.barberName}>{b.name}</span>
-                      {b.specialty && <span className={styles.barberSpec}>{b.specialty}</span>}
-                    </div>
-                    {form.barber_id === b.id && <span className={styles.checkMark}><Check size={14} strokeWidth={2.6} /></span>}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <h2 className={styles.stepTitle}>Elige servicio y barbero</h2>
             <div className={styles.section}>
               <p className={styles.sectionLabel}>Servicio</p>
               {Object.entries(servicesByCategory).map(([cat, svcs]) => (
@@ -163,7 +152,7 @@ export default function BookingPage() {
                   <p className={styles.categoryLabel}><Sparkles size={13} strokeWidth={2} />{CATEGORY_LABELS[cat] || cat}</p>
                   <div className={styles.serviceList}>
                     {svcs.map(s => (
-                      <button key={s.id} className={`${styles.serviceCard} ${form.service_id === s.id ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, service_id: s.id }))}>
+                      <button key={s.id} aria-pressed={form.service_id === s.id} className={`${styles.serviceCard} ${form.service_id === s.id ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, service_id: s.id }))}>
                         <div className={styles.serviceInfo}>
                           <span className={styles.serviceName}>{s.name}</span>
                           {s.description && <span className={styles.serviceDesc}>{s.description}</span>}
@@ -178,6 +167,22 @@ export default function BookingPage() {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className={styles.section}>
+              <p className={styles.sectionLabel}>Barbero</p>
+              <div className={styles.barberGrid}>
+                <button aria-pressed={form.barber_id === 'any'} className={`${styles.barberCard} ${form.barber_id === 'any' ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, barber_id: 'any' }))}><span className={styles.barberAvatar}><Scissors size={21} strokeWidth={2} /></span><span className={styles.barberInfo}><span className={styles.barberName}>Cualquier barbero disponible</span><span className={styles.barberSpec}>Según el horario que elijas</span></span>{form.barber_id === 'any' && <span className={styles.checkMark}><Check size={14} /></span>}</button>
+                {barbers.filter(b => !form.service_id || links.some(l => l.barber_id === b.id && l.service_id === form.service_id)).map(b => (
+                  <button key={b.id} aria-pressed={form.barber_id === b.id} className={`${styles.barberCard} ${form.barber_id === b.id ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, barber_id: b.id }))}>
+                    <div className={styles.barberAvatar}><Scissors size={21} strokeWidth={1.9} /></div>
+                    <div className={styles.barberInfo}>
+                      <span className={styles.barberName}>{b.name}</span>
+                      {b.specialty && <span className={styles.barberSpec}>{b.specialty}</span>}
+                    </div>
+                    {form.barber_id === b.id && <span className={styles.checkMark}><Check size={14} strokeWidth={2.6} /></span>}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -215,7 +220,7 @@ export default function BookingPage() {
             <div className={styles.formGrid}>
               <FormField label="Nombre completo" required><Input placeholder="Ej: Juan Perez" value={form.client_name} onChange={set('client_name')} /></FormField>
               <FormField label="Telefono" required><Input type="tel" placeholder="Ej: 8888-1234" value={form.client_phone} onChange={set('client_phone')} /></FormField>
-              <FormField label="Correo electronico"><Input type="email" placeholder="Ej: juan@email.com" value={form.client_email} onChange={set('client_email')} /></FormField>
+              <FormField label="Correo electrónico (opcional; no se envían correos automáticos)"><Input type="email" placeholder="Ej: juan@email.com" value={form.client_email} onChange={set('client_email')} /></FormField>
               <FormField label="Notas adicionales"><TextArea placeholder="Ej: preferencia de estilo o indicaciones." value={form.notes} onChange={set('notes')} /></FormField>
             </div>
           </div>
@@ -225,7 +230,7 @@ export default function BookingPage() {
           <div className={styles.stepContent}>
             <h2 className={styles.stepTitle}>Confirma tu cita</h2>
             <div className={styles.summary}>
-              <div className={styles.summaryRow}><span className={styles.summaryKey}>Barbero</span><span className={styles.summaryVal}>{selectedBarber?.name}</span></div>
+              <div className={styles.summaryRow}><span className={styles.summaryKey}>Barbero</span><span className={styles.summaryVal}>{selectedBarber?.name || 'Cualquier barbero disponible'}</span></div>
               <div className={styles.summaryRow}><span className={styles.summaryKey}>Servicio</span><span className={styles.summaryVal}>{selectedService?.name}</span></div>
               <div className={styles.summaryRow}><span className={styles.summaryKey}>Duracion</span><span className={styles.summaryVal}>{selectedService?.duration} minutos</span></div>
               <div className={styles.summaryRow}><span className={styles.summaryKey}>Precio</span><span className={`${styles.summaryVal} ${styles.gold}`}>{selectedService && formatPrice(selectedService.price)}</span></div>

@@ -4,7 +4,7 @@
 .loader { display: flex; justify-content: center; padding: 60px; }
 
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); }
+.title { font-family: var(--font-display); font-size: 28px; color: var(--text); }
 .sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
 .btnNew {
@@ -12,17 +12,17 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
-.btnNew:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btnNew:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
 /* Table */
 .tableWrap {
@@ -57,8 +57,8 @@
 .avatar {
   width: 32px; height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--gold-dim), var(--gold));
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   font-weight: 700;
   font-size: 13px;
   display: flex;
@@ -76,7 +76,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.roleAdmin  { background: rgba(201,168,76,0.15); color: var(--gold); }
+.roleAdmin  { background: rgb(var(--accent-rgb) / 0.15); color: var(--accent); }
 .roleBarber { background: rgba(91,156,246,0.15); color: var(--blue); }
 
 .statusBadge {
@@ -104,9 +104,9 @@
   font-size: 14px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
-.btnEdit:hover { border-color: var(--gold-dim); color: var(--gold); }
+.btnEdit:hover { border-color: var(--accent-dim); color: var(--accent); }
 
 .btnDelete {
   width: 30px; height: 30px;
@@ -117,7 +117,7 @@
   font-size: 12px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
 .btnDelete:hover { border-color: var(--red); color: var(--red); }
 
@@ -125,13 +125,13 @@
 .infoBox {
   display: flex;
   gap: 14px;
-  background: rgba(201,168,76,0.05);
-  border: 1px solid rgba(201,168,76,0.15);
+  background: rgb(var(--accent-rgb) / 0.05);
+  border: 1px solid rgb(var(--accent-rgb) / 0.15);
   border-radius: var(--radius);
   padding: 16px 18px;
 }
-.infoIcon { font-size: 16px; color: var(--gold-dim); flex-shrink: 0; margin-top: 1px; }
-.infoIcon { display: inline-flex; color: var(--gold); }
+.infoIcon { font-size: 16px; color: var(--accent-dim); flex-shrink: 0; margin-top: 1px; }
+.infoIcon { display: inline-flex; color: var(--accent); }
 .infoTitle { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 4px; }
 .infoText  { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
 .infoText strong { color: var(--text); }
@@ -154,23 +154,23 @@
   color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  transition: all 0.15s;
+  font-family: var(--font-body);
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
 .btnCancel:hover { color: var(--text); }
 .btnSave {
   padding: 10px 24px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  transition: all 0.15s;
+  font-family: var(--font-body);
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
-.btnSave:hover:not(:disabled) { background: var(--gold-light); }
+.btnSave:hover:not(:disabled) { background: var(--primary-hover); }
 .btnSave:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .dateInputWrap {
@@ -182,7 +182,7 @@
 .dateInputWrap svg {
   position: absolute;
   left: 12px;
-  color: var(--gold);
+  color: var(--accent);
   z-index: 1;
   pointer-events: none;
 }

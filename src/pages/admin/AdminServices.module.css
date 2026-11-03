@@ -4,26 +4,26 @@
 .loader { display: flex; justify-content: center; padding: 60px; }
 
 .header { display: flex; align-items: center; justify-content: space-between; }
-.title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); }
+.title { font-family: var(--font-display); font-size: 28px; color: var(--text); }
 
 .btnNew {
   padding: 10px 20px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
-.btnNew:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btnNew:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
 .content { display: flex; flex-direction: column; gap: 24px; }
 
 .group {}
 .groupTitle {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 17px;
   color: var(--text-muted);
   margin-bottom: 10px;
@@ -64,7 +64,7 @@
 .svcName { display: block; font-weight: 600; }
 .svcDesc { display: block; font-size: 11px; color: var(--text-muted); margin-top: 3px; max-width: 300px; }
 
-.price { color: var(--gold); font-weight: 600; }
+.price { color: var(--accent); font-weight: 600; }
 
 .toggleBtn {
   padding: 4px 10px;
@@ -75,8 +75,8 @@
   text-transform: uppercase;
   cursor: pointer;
   border: none;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
 .toggleActive { background: rgba(76,175,125,0.15); color: var(--green); }
 .toggleActive:hover { background: rgba(76,175,125,0.25); }
@@ -91,10 +91,10 @@
   color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
-.btnEdit:hover { border-color: var(--gold-dim); color: var(--gold); }
+.btnEdit:hover { border-color: var(--accent-dim); color: var(--accent); }
 
 /* Modal */
 .formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
@@ -117,22 +117,22 @@
   color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
 .btnCancel:hover { color: var(--text); }
 
 .btnSave {
   padding: 10px 24px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
-.btnSave:hover:not(:disabled) { background: var(--gold-light); }
+.btnSave:hover:not(:disabled) { background: var(--primary-hover); }
 .btnSave:disabled { opacity: 0.5; cursor: not-allowed; }

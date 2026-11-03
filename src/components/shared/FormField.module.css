@@ -7,19 +7,20 @@
 .label {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted);
 }
 
-.req { color: var(--gold); margin-left: 2px; }
+.req { color: var(--accent); margin-left: 2px; }
 
 .input {
   width: 100%;
   background: var(--bg-elevated);
   border: 1px solid var(--border-light);
   border-radius: var(--radius);
-  padding: 10px 14px;
+  padding: 13px 14px;
+  min-height: 46px;
   color: var(--text);
   font-size: 14px;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -28,8 +29,8 @@
 }
 
 .input:focus {
-  border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.12);
 }
 
 .input::placeholder { color: var(--text-dim); }

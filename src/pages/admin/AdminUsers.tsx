@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { CalendarClock, Edit3, Plus, Power, ShieldCheck } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { authApi } from '../../services/api'
-import type { User } from '../../types'
+import toast from '../../services/toast'
+import { authApi, barbersApi } from '../../services/api'
+import type { User, Barber } from '../../types'
 import Modal from '../../components/shared/Modal'
 import { FormField, Input, Select } from '../../components/shared/FormField'
 import styles from './AdminUsers.module.css'
@@ -10,21 +10,25 @@ import styles from './AdminUsers.module.css'
 interface UserForm {
   username: string
   password: string
-  role: 'Admin' | 'Subscription_L1'
+  role: 'Admin' | 'Barber'
   active: number
   subscriptionExpirationDate: string
+  barber_id: string
 }
 
 const emptyForm = (): UserForm => ({
   username: '',
   password: '',
-  role: 'Subscription_L1',
+  role: 'Barber',
   active: 1,
   subscriptionExpirationDate: '',
+  barber_id: '',
 })
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([])
+  const [barbers, setBarbers] = useState<Barber[]>([])
+  useEffect(() => { barbersApi.getAllAdmin().then(setBarbers).catch(() => toast.error('No se pudieron cargar los barberos')) }, [])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<User | null>(null)
@@ -62,6 +66,7 @@ export default function AdminUsers() {
       role: u.role,
       active: u.active ?? 1,
       subscriptionExpirationDate: u.subscriptionExpirationDate ? u.subscriptionExpirationDate.slice(0, 10) : '',
+      barber_id: u.barber_id || '',
     })
     setShowModal(true)
   }
@@ -72,18 +77,17 @@ export default function AdminUsers() {
     setSaving(true)
     try {
       if (editing) {
-        await authApi.updateUser(editing.id, { active: Number(form.active) } as any)
-        if (form.subscriptionExpirationDate) {
-          await authApi.updateSubscriptionExpiration(editing.id, `${form.subscriptionExpirationDate}T00:00:00.000Z`)
-        }
+        await authApi.updateUser(editing.id, { active: Number(form.active), barber_id: form.barber_id || null })
+        await authApi.updateSubscriptionExpiration(editing.id, form.subscriptionExpirationDate ? `${form.subscriptionExpirationDate}T23:59:59-06:00` : '')
         toast.success('Usuario actualizado')
       } else {
         await authApi.createUser({
           username: form.username.trim(),
           password: form.password,
           role: form.role,
+          barber_id: form.barber_id || null,
         } as any)
-        toast.success(form.role === 'Admin' ? 'Administrador creado' : 'Usuario Subscription_L1 creado')
+        toast.success(form.role === 'Admin' ? 'Administrador creado' : 'Usuario Barber creado')
       }
       setShowModal(false)
       fetchAll()
@@ -105,7 +109,7 @@ export default function AdminUsers() {
     }
   }
 
-  const roleLabel = (role: string) => role === 'Admin' ? 'Administrador' : 'Subscription_L1'
+  const roleLabel = (role: string) => role === 'Admin' ? 'Administrador' : 'Barber'
 
   return (
     <div className={styles.page}>
@@ -185,7 +189,7 @@ export default function AdminUsers() {
           <p className={styles.infoTitle}>Reglas de acceso</p>
           <p className={styles.infoText}>
             <strong>Administrador</strong> — acceso completo al panel. <br />
-            <strong>Subscription_L1</strong> — usuario autenticado sujeto a actividad y expiracion.
+            <strong>Barber</strong> — usuario autenticado sujeto a actividad y expiracion.
           </p>
         </div>
       </div>
@@ -199,19 +203,20 @@ export default function AdminUsers() {
 
             {!editing && (
               <FormField label="Contrasena" required>
-                <Input type="password" placeholder="Minimo 6 caracteres, una letra y un numero" value={form.password} onChange={set('password')} autoComplete="new-password" />
+              <Input type="password" minLength={12} placeholder="Mínimo 12 caracteres" value={form.password} onChange={set('password')} autoComplete="new-password" />
               </FormField>
             )}
 
             {!editing && (
               <FormField label="Rol de creacion" required>
                 <Select value={form.role} onChange={set('role')}>
-                  <option value="Subscription_L1">Subscription_L1</option>
+                  <option value="Barber">Barber</option>
                   <option value="Admin">Administrador</option>
                 </Select>
               </FormField>
             )}
 
+            {form.role === 'Barber' && <FormField label="Perfil de barbero"><Select value={form.barber_id} onChange={set('barber_id')}><option value="">Sin asignar</option>{barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</Select></FormField>}
             {editing && (
               <FormField label="Estado">
                 <Select value={form.active} onChange={e => setForm(f => ({ ...f, active: Number(e.target.value) }))}>

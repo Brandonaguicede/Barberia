@@ -5,21 +5,20 @@ import logo from "../../imagenes/logo2.png";
 
 export default function ClientLayout() {
   const location = useLocation()
-  const isConfirmation = location.pathname === '/confirmacion'
+  const isConfirmation = location.pathname === '/confirmacion' || location.pathname.startsWith('/mi-cita/')
 
   return (
     <div className={styles.root}>
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link to="/" className={styles.logo}>
-           <div className={styles.logoContainer}>
-  <img src={logo} alt="logo"  width={90}/>
-</div>
+            <img src={logo} alt="" className={styles.logoImage} />
+            <span className={styles.brandName}>ANGEL<span>BARBER SHOP</span></span>
           </Link>
-          <nav className={styles.nav}>
+          <nav className={styles.nav} aria-label="Navegaci?n principal">
             {!isConfirmation && (
-              <Link to="/admin" className={styles.adminLink}>
-                 <UserRound size={18} strokeWidth={2} aria-hidden="true" />
+              <Link to="/admin" className={styles.adminLink} aria-label="Acceso del personal">
+                 <UserRound size={17} strokeWidth={2} aria-hidden="true" /><span>Personal</span>
               </Link>
             )}
           </nav>

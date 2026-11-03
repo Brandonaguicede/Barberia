@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, CalendarCheck, CalendarDays, Clock3, DollarSign, Scissors, Settings, UsersRound } from 'lucide-react'
 import { appointmentsApi } from '../../services/api'
+import toast from '../../services/toast'
+import { localDate } from '../../utils/booking'
 import { useAuth } from '../../context/AuthContext'
 import type { Appointment, AppStats } from '../../types'
 import StatusBadge from '../../components/shared/StatusBadge'
@@ -14,9 +16,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDate()
     const apptParams: Record<string, string> = { date: today }
-    if (user?.role === 'Subscription_L1' && user.barber_id) {
+    if (user?.role === 'Barber' && user.barber_id) {
       apptParams.barber_id = user.barber_id
     }
     Promise.all([
@@ -25,7 +27,7 @@ export default function AdminDashboard() {
     ]).then(([s, a]) => {
       setStats(s)
       setTodayAppts(a)
-    }).finally(() => setLoading(false))
+    }).catch(() => toast.error('No se pudo cargar el resumen')).finally(() => setLoading(false))
   }, [user])
 
   const formatPrice = (p: number) =>
@@ -97,7 +99,7 @@ export default function AdminDashboard() {
 
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>{user?.role === 'Subscription_L1' ? 'Mis citas de hoy' : 'Citas de hoy'}</h2>
+          <h2 className={styles.sectionTitle}>{user?.role === 'Barber' ? 'Mis citas de hoy' : 'Citas de hoy'}</h2>
           <span className={styles.sectionCount}>{todayAppts.length}</span>
         </div>
         {todayAppts.length === 0 ? (

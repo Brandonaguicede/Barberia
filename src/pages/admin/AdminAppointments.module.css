@@ -4,20 +4,20 @@
 .loader { display: flex; justify-content: center; padding: 60px; }
 
 .header { display: flex; align-items: center; justify-content: space-between; }
-.title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); }
+.title { font-family: var(--font-display); font-size: 28px; color: var(--text); }
 
 .btnNew {
   padding: 10px 20px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
   border: none;
   cursor: pointer;
 }
-.btnNew:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btnNew:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
 /* Filters */
 .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -29,12 +29,12 @@
   color: var(--text);
   font-size: 13px;
   outline: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   transition: border-color 0.15s;
   appearance: none;
   cursor: pointer;
 }
-.filterInput:focus { border-color: var(--gold-dim); }
+.filterInput:focus { border-color: var(--accent-dim); }
 .filterInput option { background: var(--bg-card); }
 
 .clearBtn {
@@ -45,7 +45,7 @@
   color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
 .clearBtn:hover { color: var(--red); border-color: var(--red); }
 
@@ -88,7 +88,7 @@
 .clientName { display: block; font-weight: 600; color: var(--text); }
 .clientPhone { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-.price { color: var(--gold); font-weight: 600; }
+.price { color: var(--accent); font-weight: 600; }
 
 .statusSelect {
   background: var(--bg-elevated);
@@ -98,11 +98,11 @@
   font-size: 11px;
   padding: 4px 8px;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   outline: none;
   appearance: none;
 }
-.statusSelect:focus { border-color: var(--gold-dim); }
+.statusSelect:focus { border-color: var(--accent-dim); }
 .statusSelect option { background: var(--bg-card); }
 
 .rowActions { display: flex; gap: 6px; }
@@ -117,9 +117,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
-.btnEdit:hover { border-color: var(--gold-dim); color: var(--gold); }
+.btnEdit:hover { border-color: var(--accent-dim); color: var(--accent); }
 .btnCancel {
   width: 30px; height: 30px;
   background: var(--bg-elevated);
@@ -131,7 +131,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
 }
 .btnCancel:hover { border-color: var(--red); color: var(--red); }
 
@@ -173,22 +173,22 @@
   color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
 .btnCancel2:hover { color: var(--text); border-color: var(--text-muted); }
 
 .btnSave {
   padding: 10px 24px;
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--on-primary);
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   border: none;
-  transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  transition: background-color 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+  font-family: var(--font-body);
 }
-.btnSave:hover:not(:disabled) { background: var(--gold-light); }
+.btnSave:hover:not(:disabled) { background: var(--primary-hover); }
 .btnSave:disabled { opacity: 0.5; cursor: not-allowed; }

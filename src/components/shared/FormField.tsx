@@ -1,4 +1,5 @@
 import styles from './FormField.module.css'
+import { cloneElement, isValidElement, useId, type ReactElement } from 'react'
 
 interface FormFieldProps {
   label: string
@@ -8,13 +9,16 @@ interface FormFieldProps {
 }
 
 export function FormField({ label, required, error, children }: FormFieldProps) {
+  const generatedId = useId()
+  const child = isValidElement(children) ? children as ReactElement<{id?: string; 'aria-describedby'?: string; 'aria-invalid'?: boolean; 'aria-required'?: boolean}> : null
+  const id = child?.props.id || generatedId
   return (
     <div className={styles.field}>
-      <label className={styles.label}>
-        {label}{required && <span className={styles.req}>*</span>}
+      <label className={styles.label} htmlFor={id}>
+        {label}{required && <span className={styles.req} aria-hidden="true">*</span>}
       </label>
-      {children}
-      {error && <span className={styles.error}>{error}</span>}
+      {child ? cloneElement(child, { id, 'aria-required': required, 'aria-invalid': Boolean(error), 'aria-describedby': error ? `${id}-error` : child.props['aria-describedby'] }) : children}
+      {error && <span id={`${id}-error`} className={styles.error}>{error}</span>}
     </div>
   )
 }

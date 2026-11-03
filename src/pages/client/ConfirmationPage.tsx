@@ -34,17 +34,12 @@ export default function ConfirmationPage() {
     <div className={styles.page}>
       <div className={styles.icon}>✓</div>
       <h1 className={styles.title}>¡Cita confirmada!</h1>
-      <p className={styles.sub}>Tu cita ha sido agendada con éxito. Te esperamos.</p>
-      {appt.client_email && (
-        <div className={styles.notice}>
-          La confirmacion sera enviada al correo {appt.client_email}.
-        </div>
-      )}
+      <p className={styles.sub}>Consulta el comprobante privado generado al reservar.</p>
 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <span className={styles.cardId}>Cita #{appt.id.slice(0, 8).toUpperCase()}</span>
-          <span className={styles.badge}>Pendiente</span>
+          <span className={styles.badge}>{appt.status}</span>
         </div>
 
         <div className={styles.rows}>
