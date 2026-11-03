@@ -100,4 +100,8 @@
 .optionalFields { border-top:1px solid #ffffff16; padding-top:17px; }
 .optionalFields summary { cursor:pointer; color:#b9b9c6; font-size:11px; line-height:1.8; }
 .optionalFields>div { display:flex; flex-direction:column; gap:17px; margin-top:17px; }
+.catalogNotice { display:flex; align-items:center; justify-content:space-between; gap:13px; margin-bottom:18px; padding:13px 15px; border:1px solid #ef708646; border-radius:12px; background:#a1243b13; }
+.catalogNotice p { color:#e6d2db; font-size:11px; line-height:1.8; }
+.catalogNotice button { flex-shrink:0; min-height:36px; background:none; color:#ffafbf; font-size:10px; font-weight:700; padding:7px; border-radius:7px; }
+@media(max-width:760px) { .catalogNotice { flex-direction:column; align-items:flex-start; gap:5px; } }
 @media(max-width:760px) { .inProgress .hero { display:none; } .inProgress { gap:0; } .bookingContext { padding:11px; gap:9px; } .contextIcon { width:32px; height:32px; } .bookingContext strong { font-size:11px; } .bookingContext span:not(.contextIcon) { font-size:9px; } .slotsGrid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .slotBtn { font-size:11px; } }

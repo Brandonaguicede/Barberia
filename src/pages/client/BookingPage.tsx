@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import toast from '../../services/toast'
 import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Clock3, Scissors, ShieldCheck, UserRound } from 'lucide-react'
 import { localDate } from '../../utils/booking'
 import { addCalendarDays } from '../../utils/calendar'
 import BookingCalendar from '../../components/client/BookingCalendar'
-import { catalogApi, appointmentsApi } from '../../services/api'
+import { catalogApi, appointmentsApi, type Catalog } from '../../services/api'
+import useCatalogUpdates from '../../hooks/useCatalogUpdates'
+import { reconcileCatalog } from '../../utils/catalog'
 import type { Barber, Service } from '../../types'
 import { FormField, Input, TextArea } from '../../components/shared/FormField'
 import styles from './BookingPage.module.css'
@@ -43,6 +45,9 @@ export default function BookingPage() {
   const [loadError, setLoadError] = useState('')
   const [loadingCatalog, setLoadingCatalog] = useState(true)
   const [catalogAttempt, setCatalogAttempt] = useState(0)
+  const [refreshingCatalog, setRefreshingCatalog] = useState(false)
+  const [catalogSyncError, setCatalogSyncError] = useState('')
+  const [catalogNotice, setCatalogNotice] = useState('')
   const [links, setLinks] = useState<{barber_id:string;service_id:string}[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<FormData>({
@@ -50,26 +55,49 @@ export default function BookingPage() {
     appointment_time: '', client_name: '', client_phone: '',
     client_email: '', notes: '',
   })
+  const catalogRef = useRef<Catalog | null>(null)
+  const formRef = useRef(form)
+  const stepRef = useRef(step)
+  const submittingRef = useRef(submitting)
+  const deferredCatalog = useRef(false)
+  formRef.current = form; stepRef.current = step; submittingRef.current = submitting
+  useCatalogUpdates(() => setCatalogAttempt(n => n + 1), submitting)
+  useEffect(() => {
+    if (!submitting && deferredCatalog.current) { deferredCatalog.current = false; setCatalogAttempt(n => n + 1) }
+  }, [submitting])
 
   useEffect(() => {
     let live = true
-    setLoadingCatalog(true)
+    setLoadingCatalog(!catalogRef.current)
+    setRefreshingCatalog(true)
     setLoadError('')
     catalogApi.get()
       .then(c => { if (live) {
+        if (submittingRef.current) { deferredCatalog.current = true; return }
+        const previous = catalogRef.current
+        const changes = reconcileCatalog(previous, c, formRef.current, localDate())
+        catalogRef.current = c
         setBarbers(c.barbers); setServices(c.services); setLinks(c.barber_services); setHorizonDays(c.settings.horizon_days)
-        setForm(current => {
-          const available = c.services.filter(s => c.barber_services.some(l => l.service_id === s.id && c.barbers.some(b => b.id === l.barber_id)))
-          const serviceId = available.some(s => s.id === current.service_id) ? current.service_id : available.length === 1 ? available[0].id : ''
-          const matching = c.barbers.filter(b => c.barber_services.some(l => l.barber_id === b.id && (!serviceId || l.service_id === serviceId)))
-          const barberId = matching.some(b => b.id === current.barber_id) ? current.barber_id : matching.length === 1 ? matching[0].id : ''
-          return { ...current, service_id: serviceId, barber_id: barberId, appointment_time: '' }
-        })
+        setForm(current => ({ ...current, ...reconcileCatalog(previous, c, current, localDate()).selection }))
+        setCatalogSyncError('')
+        if (previous) setSlotAttempt(n => n + 1)
+        if (changes.selectionChanged) { setCatalogNotice('El servicio o barbero elegido cambió. Revisa tu selección para continuar.'); setStep(1) }
+        else if (changes.priceChanged) { setCatalogNotice('El precio del servicio se actualizó. Revísalo antes de continuar.'); if (stepRef.current > 1) setStep(1) }
+        else if (changes.durationChanged || changes.dateChanged) { setCatalogNotice('La duración o la disponibilidad cambió. Confirma de nuevo la fecha y hora.'); if (stepRef.current > 2) setStep(2) }
       } })
-      .catch(() => { if (live) setLoadError('No pudimos cargar la agenda. Comprueba tu conexión e inténtalo de nuevo.') })
-      .finally(() => { if (live) setLoadingCatalog(false) })
+      .catch(() => { if (live) {
+        if (catalogRef.current) setCatalogSyncError('No pudimos actualizar los servicios. Vuelve a intentar antes de confirmar.')
+        else setLoadError('No pudimos cargar la agenda. Comprueba tu conexión e inténtalo de nuevo.')
+      } })
+      .finally(() => { if (live) { setLoadingCatalog(false); setRefreshingCatalog(false) } })
     return () => { live = false }
   }, [catalogAttempt])
+
+  useEffect(() => {
+    if (!catalogSyncError && !loadError) return
+    const timer = setTimeout(() => { if (document.visibilityState !== 'hidden' && navigator.onLine && !submittingRef.current) setCatalogAttempt(n => n + 1) }, 60000)
+    return () => clearTimeout(timer)
+  }, [catalogSyncError, loadError, catalogAttempt])
 
   useEffect(() => {
     if (location.hash === '#servicios' || location.hash === '#barberos') {
@@ -81,7 +109,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     let live = true
-    const key = `${form.barber_id}|${form.service_id}|${form.appointment_date}`
+    const key = `${form.barber_id}|${form.service_id}|${form.appointment_date}|${slotAttempt}`
     if (form.barber_id && form.appointment_date && form.service_id) {
       setSlotResult({ key, slots: [], loading: true, error: '' })
       appointmentsApi.getAvailableSlots({
@@ -89,8 +117,16 @@ export default function BookingPage() {
         date: form.appointment_date,
         service_id: form.service_id,
       })
-        .then(slots => { if (live) setSlotResult({ key, slots, loading: false, error: '' }) })
-        .catch(() => { if (live) setSlotResult({ key, slots: [], loading: false, error: 'No pudimos consultar las horas. Comprueba tu conexión y vuelve a intentar.' }) })
+        .then(slots => { if (live) {
+          setSlotResult({ key, slots, loading: false, error: '' })
+          const current = formRef.current
+          if (current.barber_id === form.barber_id && current.service_id === form.service_id && current.appointment_date === form.appointment_date && current.appointment_time && !slots.includes(current.appointment_time)) {
+            setForm(f => ({ ...f, appointment_time: '' }))
+            setCatalogNotice('La hora elegida ya no está disponible. Selecciona otra hora; tus datos se conservan.')
+            setStep(s => s > 2 ? 2 : s)
+          }
+        } })
+        .catch(() => { if (live) { setSlotResult({ key, slots: [], loading: false, error: 'No pudimos consultar las horas. Comprueba tu conexión y vuelve a intentar.' }); setStep(s => s > 2 ? 2 : s) } })
     }
     return () => { live = false }
   }, [form.barber_id, form.appointment_date, form.service_id, slotAttempt])
@@ -115,7 +151,7 @@ export default function BookingPage() {
 
   const today = localDate()
   const maxDate = addCalendarDays(today, horizonDays)
-  const slotKey = `${form.barber_id}|${form.service_id}|${form.appointment_date}`
+  const slotKey = `${form.barber_id}|${form.service_id}|${form.appointment_date}|${slotAttempt}`
   const slots = slotResult.key === slotKey ? slotResult.slots : []
   const loadingSlots = Boolean(form.appointment_date && (slotResult.key !== slotKey || slotResult.loading))
   const slotsError = slotResult.key === slotKey ? slotResult.error : ''
@@ -133,15 +169,19 @@ export default function BookingPage() {
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 }).format(p)
 
+  const validSelection = !!selectedService && !!selectedBarber && eligibleBarbers.some(b => b.id === form.barber_id)
+  const validTime = !!form.appointment_date && form.appointment_date >= today && form.appointment_date <= maxDate && !loadingSlots && !slotsError && slots.includes(form.appointment_time)
+  const validContact = form.client_name.trim().length > 0 && /^\+?[0-9 ()-]{8,25}$/.test(form.client_phone) && form.client_phone.replace(/\D/g, '').length >= 8
   const canGoNext = () => {
-    if (step === 1) return !!selectedService && !!selectedBarber && eligibleBarbers.some(b => b.id === form.barber_id)
-    if (step === 2) return !!form.appointment_date && form.appointment_date >= today && form.appointment_date <= maxDate && !loadingSlots && slots.includes(form.appointment_time)
-    if (step === 3) return form.client_name.trim().length > 0 && /^\+?[0-9 ()-]{8,25}$/.test(form.client_phone) && form.client_phone.replace(/\D/g, '').length >= 8
+    if (step === 1) return validSelection
+    if (step === 2) return validTime
+    if (step === 3) return validContact && validTime
     return false
   }
 
   const handleSubmit = async () => {
-    if (submitting) return
+    if (submitting || refreshingCatalog || catalogSyncError) return
+    if (!validSelection || !validTime || !validContact) { setStep(!validSelection ? 1 : !validTime ? 2 : 3); return }
     setSubmitting(true)
     try {
       const appt = await appointmentsApi.create(form)
@@ -195,6 +235,8 @@ export default function BookingPage() {
           )
         })}
       </ol>
+      {catalogNotice && <div className={styles.catalogNotice} role="status"><p>{catalogNotice}</p><button type="button" aria-label="Cerrar actualización del catálogo" onClick={() => setCatalogNotice('')}>Entendido</button></div>}
+      {catalogSyncError && <div className={styles.catalogNotice} role="alert"><p>{catalogSyncError}</p><button type="button" onClick={() => setCatalogAttempt(n => n + 1)} disabled={refreshingCatalog}>Actualizar servicios</button></div>}
 
       <div className={styles.card}>
         <h2 className={styles.stepTitle} id="booking-step-title" tabIndex={-1}>{step}. {['Elige servicio y barbero', 'Selecciona fecha y hora', 'Datos de contacto', 'Confirma tu cita'][step - 1]}</h2>
@@ -303,7 +345,7 @@ export default function BookingPage() {
           {step < 4 ? (
             <button className={styles.btnNext} onClick={() => changeStep((step + 1) as Step)} disabled={!canGoNext()}>Continuar <ArrowRight size={23} aria-hidden="true" /></button>
           ) : (
-            <button className={styles.btnConfirm} onClick={handleSubmit} disabled={submitting}>{submitting ? 'Agendando...' : <>Confirmar cita <Check size={22} aria-hidden="true" /></>}</button>
+            <button className={styles.btnConfirm} onClick={handleSubmit} disabled={submitting || refreshingCatalog || !!catalogSyncError || !validSelection || !validTime || !validContact}>{submitting ? 'Agendando...' : refreshingCatalog ? 'Actualizando servicios…' : <>Confirmar cita <Check size={22} aria-hidden="true" /></>}</button>
           )}
         </div>
         <p className={styles.panelNote}><ShieldCheck size={13} aria-hidden="true" />Tus datos se usan para gestionar tu cita.</p>

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import toast from '../../services/toast'
-import { servicesApi } from '../../services/api'
-import type { Service } from '../../types'
+import { servicesApi, barbersApi } from '../../services/api'
+import { supabase } from '../../services/supabase'
+import type { Service, Barber } from '../../types'
 import Modal from '../../components/shared/Modal'
 import { FormField, Input, Select, TextArea } from '../../components/shared/FormField'
 import styles from './AdminServices.module.css'
@@ -26,6 +27,9 @@ const emptyForm = (): ServiceForm => ({
 
 export default function AdminServices() {
   const [services, setServices] = useState<Service[]>([])
+  const [barbers, setBarbers] = useState<Barber[]>([])
+  const [assignments, setAssignments] = useState<{ service_id: string; barber_id: string }[]>([])
+  const [selectedBarbers, setSelectedBarbers] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Service | null>(null)
@@ -35,8 +39,9 @@ export default function AdminServices() {
   const fetchAll = async () => {
     setLoading(true)
     try {
-      const data = await servicesApi.getAllAdmin()
-      setServices(data)
+      const [data, people, links] = await Promise.all([servicesApi.getAllAdmin(), barbersApi.getAllAdmin(), supabase.from('barber_services').select('service_id,barber_id')])
+      if (links.error) throw links.error
+      setServices(data); setBarbers(people); setAssignments(links.data || [])
     } catch { toast.error('Error al cargar servicios') }
     setLoading(false)
   }
@@ -47,9 +52,10 @@ export default function AdminServices() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm(f => ({ ...f, [k]: e.target.value }))
 
-  const openCreate = () => { setEditing(null); setForm(emptyForm()); setShowModal(true) }
+  const openCreate = () => { setEditing(null); setForm(emptyForm()); setSelectedBarbers(barbers.filter(b => b.active).length === 1 ? [barbers.find(b => b.active)!.id] : []); setShowModal(true) }
   const openEdit = (s: Service) => {
     setEditing(s)
+    setSelectedBarbers(assignments.filter(link => link.service_id === s.id).map(link => link.barber_id))
     setForm({
       name: s.name, description: s.description || '', duration: String(s.duration),
       price: String(s.price), category: s.category, active: s.active
@@ -67,13 +73,8 @@ export default function AdminServices() {
         duration: Number(form.duration),
         price: Number(form.price),
       }
-      if (editing) {
-        await servicesApi.update(editing.id, payload)
-        toast.success('Servicio actualizado')
-      } else {
-        await servicesApi.create(payload)
-        toast.success('Servicio creado')
-      }
+      await servicesApi.saveWithBarbers(editing?.id || null, payload, selectedBarbers)
+      toast.success(selectedBarbers.length ? editing ? 'Servicio actualizado' : 'Servicio creado' : 'Servicio guardado. Asigna un barbero para mostrarlo a los clientes.')
       setShowModal(false)
       fetchAll()
     } catch (err: any) {
@@ -132,6 +133,7 @@ export default function AdminServices() {
                           <td>
                             <span className={styles.svcName}>{s.name}</span>
                             {s.description && <span className={styles.svcDesc}>{s.description}</span>}
+                            <span className={styles.svcDesc} style={{ color: assignments.some(link => link.service_id === s.id && barbers.some(b => b.id === link.barber_id && b.active)) ? 'var(--text-dim)' : 'var(--accent-light)' }}>{assignments.some(link => link.service_id === s.id && barbers.some(b => b.id === link.barber_id && b.active)) ? `Barberos: ${assignments.filter(link => link.service_id === s.id).map(link => barbers.find(b => b.id === link.barber_id)?.name.trim()).filter(Boolean).join(', ')}` : 'Sin barbero activo asignado · No visible para reservar'}</span>
                           </td>
                           <td>{s.duration} min</td>
                           <td className={styles.price}>{formatPrice(s.price)}</td>
@@ -178,6 +180,13 @@ export default function AdminServices() {
             <FormField label="Precio (CRC)" required>
               <Input type="number" min="0" step="500" placeholder="8000" value={form.price} onChange={set('price')} />
             </FormField>
+            <div className={styles.fullCol}>
+              <fieldset className="service-assignments" disabled={saving}>
+                <legend>Barberos que ofrecen este servicio</legend>
+                {barbers.map(barber => <label key={barber.id}><input type="checkbox" checked={selectedBarbers.includes(barber.id)} onChange={() => setSelectedBarbers(current => current.includes(barber.id) ? current.filter(id => id !== barber.id) : [...current, barber.id])} />{barber.name}{!barber.active ? ' (inactivo)' : ''}</label>)}
+              </fieldset>
+              {barbers.length === 0 ? <p className="muted">Agrega un barbero para que este servicio se pueda reservar.</p> : selectedBarbers.length === 0 && <p className="muted">El servicio se guardará, pero no aparecerá para reservar hasta que selecciones un barbero.</p>}
+            </div>
             <div className={styles.fullCol}>
               <FormField label="Descripción">
                 <TextArea

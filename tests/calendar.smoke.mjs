@@ -11,6 +11,7 @@ test('calendario: teclado, limites, barbero real, reintento y respuestas antigua
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' })
     const page = await context.newPage()
     let failed = false, releaseSlow
+    await context.route('**/rest/v1/catalog_revision*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ revision: 1 }) }))
     await context.route('**/functions/v1/booking', async route => {
       const body = route.request().postDataJSON()
       const reply = (data, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) })

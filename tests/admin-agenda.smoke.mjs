@@ -40,8 +40,19 @@ test('agenda editable desde el panel en escritorio y movil, sin datos reales', a
           state.profiles.push({ id: staffId, email: body.email, active: true, subscription_expires_at: null, user_roles: { role: 'barber' }, barbers: [{ id: barberId, name: 'Axel' }], created_at: new Date().toISOString() })
           return reply({ id: staffId })
         }
+        if (url.pathname === '/functions/v1/booking') return reply({ barbers: state.barbers, services: state.services.filter(s => s.active), barber_services: state.barber_services, settings })
+        if (url.pathname === '/rest/v1/rpc/admin_save_service') {
+          const body = request.postDataJSON(), saved = state.services.find(s => s.id === body.p_id)
+          assert.ok(saved)
+          Object.assign(saved, body.p_body)
+          state.barber_services = state.barber_services.filter(link => link.service_id !== saved.id)
+          state.barber_services.push(...body.p_barber_ids.map(id => ({ service_id: saved.id, barber_id: id })))
+          sequence++
+          return reply(saved)
+        }
         if (!url.pathname.startsWith('/rest/v1/')) return reply({})
         const table = url.pathname.split('/').at(-1)
+        if (table === 'catalog_revision') return reply({ revision: sequence + 1 })
         if (table === 'booking_settings') {
           if (method === 'PATCH') Object.assign(settings, request.postDataJSON())
           return reply(settings)
@@ -131,6 +142,22 @@ test('agenda editable desde el panel en escritorio y movil, sin datos reales', a
       while (await page.getByRole('button', { name: 'Cerrar aviso', exact: true }).count()) await page.getByRole('button', { name: 'Cerrar aviso', exact: true }).first().click()
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
       await page.screenshot({ path: `.npm-cache/screenshots/agenda-${device}.png`, fullPage: true, animations: 'disabled' })
+      const client = await context.newPage()
+      client.on('pageerror', error => errors.push(error.message))
+      await client.goto(base)
+      await client.getByText('Corte clasico', { exact: true }).waitFor()
+      await page.bringToFront()
+      await page.goto(base + '/admin/servicios')
+      await page.getByRole('button', { name: /Editar/ }).click()
+      await page.getByLabel('Nombre del servicio').fill('Corte actualizado')
+      await page.getByLabel('Precio (CRC)').fill('4500')
+      assert.equal(await page.getByRole('checkbox', { name: 'Axel', exact: true }).isChecked(), true)
+      await page.getByRole('button', { name: 'Actualizar', exact: true }).click()
+      await page.getByText('Corte actualizado', { exact: true }).waitFor()
+      await client.bringToFront()
+      await client.getByText('Corte actualizado', { exact: true }).waitFor()
+      assert.equal(await client.getByLabel('Servicio', { exact: true }).inputValue(), 'service-1')
+      assert.match((await client.getByLabel('Servicio', { exact: true }).locator('option:checked').textContent()).replace(/\s/g, ''), /4500/)
       assert.deepEqual(errors, [])
       await context.close()
     }

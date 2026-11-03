@@ -31,10 +31,16 @@ Referencias: [Vite en Vercel](https://vercel.com/docs/frameworks/frontend/vite),
 Entrar en el panel y abrir **Agenda y horarios**, o pulsar **Agenda** en la tarjeta de un barbero. Seleccionar el profesional y completar los tres indicadores de la pantalla:
 
 1. **Cuenta de personal:** vincular una cuenta de barbero sin asignar o crearla en esa misma pantalla. Las cuentas inactivas o vencidas se gestionan en Usuarios.
-2. **Servicios:** marcar los servicios que ofrece ese profesional. Crear un servicio por si solo no lo asigna ni define horas de trabajo.
+2. **Servicios:** al agregar o editar un servicio, seleccionar los barberos que lo ofrecen en ese mismo formulario. Tambien se pueden marcar los servicios desde la agenda de cada profesional. Si solo existe un barbero activo, queda preseleccionado al crear servicios nuevos. La tabla avisa cuando un servicio no tiene barbero activo asignado y no puede mostrarse para reservar.
 3. **Horario semanal:** elegir uno o varios dias, indicar inicio y fin y guardar. Cada regla guardada tiene acciones para editarla o eliminarla. El mismo editor permite guardar descansos y vacaciones o bloqueos con fecha.
 
 Todos los horarios se interpretan en Costa Rica. No se cargan horas de trabajo por defecto. Las citas existentes se conservan al cambiar las reglas. El cliente vera los espacios que cumplan las reglas, la anticipacion minima y la disponibilidad real.
+
+## Actualizacion del catalogo de clientes
+
+Los cambios en servicios, barberos y agenda notifican a las reservas abiertas. Entre pestanas del mismo navegador se envia solo un aviso local; entre dispositivos se usa Supabase Realtime sobre catalog_revision, una fila publica con numero de revision y fecha, sin datos de personal ni clientes. Al volver a la pagina o recuperar conexion se comprueba la revision, con una comprobacion periodica de respaldo. No se habilita acceso anonimo a las tablas privadas.
+
+Las selecciones validas y los datos de contacto se conservan. Si cambia el precio se solicita revisarlo; si cambia la duracion, se desactiva un servicio o la hora deja de estar disponible, el cliente vuelve al paso que debe corregir. El guardado del servicio y sus asignaciones usa admin_save_service en una misma transaccion, protegida por rol de administrador y RLS.
 
 ## Pruebas
 

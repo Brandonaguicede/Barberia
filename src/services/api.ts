@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { notifyCatalogChanged } from "./catalogEvents";
 import type { Appointment, AppStats, Barber, Service, User } from "../types";
 import { localDate, localTime } from "../utils/booking";
 export class ApiError extends Error {
@@ -39,6 +40,7 @@ export async function edge<T>(
     }
     throw new ApiError(message);
   }
+  if (name === 'admin-users' && ['create', 'update'].includes(String(payload.action))) notifyCatalogChanged();
   return data as T;
 }
 type DbAppointment = Appointment & {
@@ -195,24 +197,42 @@ function catalogCrud<T extends Barber | Service>(
       active(
         await result(supabase.from(table).select("*").eq("id", id).single()),
       ) as T,
-    create: async (b: Partial<T>): Promise<T> =>
-      active(
+    create: async (b: Partial<T>): Promise<T> => {
+      const row = active(
         await result(supabase.from(table).insert(payload(b)).select().single()),
-      ) as T,
-    update: async (id: string, b: Partial<T>): Promise<T> =>
-      active(
+      ) as T;
+      notifyCatalogChanged();
+      return row;
+    },
+    update: async (id: string, b: Partial<T>): Promise<T> => {
+      const row = active(
         await result(
           supabase.from(table).update(payload(b)).eq("id", id).select()
             .single(),
         ),
-      ) as T,
+      ) as T;
+      notifyCatalogChanged();
+      return row;
+    },
     remove: async (id: string) => {
       await result(supabase.from(table).update({ active: false }).eq("id", id));
+      notifyCatalogChanged();
     },
   };
 }
 export const barbersApi = catalogCrud<Barber>("barbers");
-export const servicesApi = catalogCrud<Service>("services");
+export const servicesApi = {
+  ...catalogCrud<Service>("services"),
+  saveWithBarbers: async (id: string | null, service: Partial<Service>, barberIds: string[]): Promise<Service> => {
+    const saved = await result<Service>(supabase.rpc('admin_save_service', {
+      p_id: id,
+      p_body: { name: service.name, description: service.description, duration: service.duration, price: service.price, category: service.category, active: Boolean(Number(service.active)) },
+      p_barber_ids: barberIds,
+    }));
+    notifyCatalogChanged();
+    return active(saved);
+  },
+};
 export const appointmentsApi = {
   getAll: async (
     params: Record<string, string> = {},

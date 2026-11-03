@@ -36,6 +36,32 @@ test("migraciones y motor PostgreSQL: reservas, permisos, tokens, auditoría y c
   };
   const hash = "a".repeat(64), nextHash = "b".repeat(64);
   let appointment;
+  await t.test('catalogo: revision publica sin datos privados y guardado atomico con barberos', async () => {
+    const before = Number((await db.query('select revision from catalog_revision')).rows[0].revision)
+    await db.exec(`begin;set local role authenticated;select set_config('request.jwt.claim.sub','${ids.admin}',true);`)
+    try {
+      const saved = (await db.query('select admin_save_service(null,$1::jsonb,$2::uuid[]) value', [JSON.stringify({ name: 'Servicio de prueba', duration: 30, price: 4500, category: 'corte', active: true }), [ids.barber]])).rows[0].value
+      assert.equal(saved.price, 4500)
+      assert.equal((await db.query('select count(*)::int n from barber_services where service_id=$1', [saved.id])).rows[0].n, 1)
+      await db.query('select admin_save_service($1,$2::jsonb,$3::uuid[])', [saved.id, JSON.stringify({ price: 5000 }), [ids.otherBarber]])
+      const linked = (await db.query('select barber_id from barber_services where service_id=$1', [saved.id])).rows
+      assert.deepEqual(linked.map(row => row.barber_id), [ids.otherBarber])
+      assert.ok(Number((await db.query('select revision from catalog_revision')).rows[0].revision) > before)
+    } finally { await db.exec('rollback') }
+    await db.exec(`begin;set local role authenticated;select set_config('request.jwt.claim.sub','${ids.admin}',true);`)
+    try { await assert.rejects(db.query('select admin_save_service($1,$2::jsonb,$3::uuid[])', [ids.service, JSON.stringify({ price: 1 }), ['ffffffff-ffff-4fff-8fff-ffffffffffff']])) }
+    finally { await db.exec('rollback') }
+    assert.equal(Number((await db.query('select price from services where id=$1', [ids.service])).rows[0].price), 8000)
+    await db.exec('begin;set local role anon;')
+    try {
+      const row = (await db.query('select * from catalog_revision')).rows[0]
+      assert.deepEqual(Object.keys(row).sort(), ['id', 'revision', 'updated_at'])
+      await assert.rejects(db.query('update catalog_revision set revision=revision+1'))
+    } finally { await db.exec('rollback') }
+    await db.exec(`begin;set local role authenticated;select set_config('request.jwt.claim.sub','${ids.user}',true);`)
+    try { await assert.rejects(db.query('select admin_save_service($1,$2::jsonb,$3::uuid[])', [ids.service, JSON.stringify({ price: 1 }), [ids.barber]])) }
+    finally { await db.exec('rollback') }
+  })
   await t.test("crea confirmada con precio/duración históricos y notificación atómica", async () => {
     const { rows } = await db.query(
       "select create_booking($1::jsonb,$2) value",

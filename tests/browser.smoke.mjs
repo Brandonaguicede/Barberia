@@ -15,6 +15,7 @@ test('reserva y enlace privado en escritorio y móvil (API simulada)',async()=>{
  const context=await browser.newContext({viewport,serviceWorkers:'block'}),page=await context.newPage(),errors=[]
  page.on('pageerror',e=>errors.push(e.message))
  let current={...appt},createCount=0
+ await context.route('**/rest/v1/catalog_revision*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({revision:1})}))
  await context.route('**/functions/v1/booking',async route=>{
  const b=route.request().postDataJSON();let data
  if(b.action==='catalog')data={barbers:[{id:'barber-1',name:'Ángel',active:true}],services:[{id:'service-1',name:'Corte clásico',duration:45,price:8000,category:'corte',active:true}],barber_services:[{barber_id:'barber-1',service_id:'service-1'}],settings:{shop_name:'ANGEL BARBER SHOP',horizon_days:90}}

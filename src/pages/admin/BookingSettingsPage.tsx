@@ -6,6 +6,7 @@ import { supabase } from '../../services/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { Barber, Service, User } from '../../types'
 import { authApi, barbersApi, servicesApi } from '../../services/api'
+import { notifyCatalogChanged } from '../../services/catalogEvents'
 import { FormField, Input, Select } from '../../components/shared/FormField'
 import styles from './BookingSettingsPage.module.css'
 
@@ -102,7 +103,7 @@ export default function BookingSettingsPage() {
   const run = async (operation: () => Promise<void>) => {
     if (busy || loadingDetails) return
     setBusy(true); setError('')
-    try { await operation(); setRefresh(n => n + 1); toast.success('Cambios guardados') }
+    try { await operation(); notifyCatalogChanged(); setRefresh(n => n + 1); toast.success('Cambios guardados') }
     catch (e) { setError(e instanceof Error ? e.message : (e as { message?: string })?.message || 'No pudimos guardar los cambios.') }
     finally { setBusy(false) }
   }
