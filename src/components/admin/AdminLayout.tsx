@@ -24,7 +24,7 @@ export default function AdminLayout() {
     { to: '/admin/citas', icon: CalendarDays, label: isAdmin ? 'Citas' : 'Mis citas', end: false, adminOnly: false },
     { to: '/admin/barberos', icon: Scissors, label: 'Barberos', end: false, adminOnly: true },
     { to: '/admin/servicios', icon: Settings, label: 'Servicios', end: false, adminOnly: true },
-    { to: '/admin/configuracion', icon: Settings, label: 'Configuración', end: false, adminOnly: false },
+    { to: '/admin/configuracion', icon: CalendarDays, label: isAdmin ? 'Agenda y horarios' : 'Mi disponibilidad', end: false, adminOnly: false },
     { to: '/admin/usuarios', icon: UsersRound, label: 'Usuarios', end: false, adminOnly: true },
   ].filter(item => !item.adminOnly || isAdmin)
 

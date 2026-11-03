@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from './services/toast'
 import { AuthProvider } from './context/AuthContext'
@@ -9,7 +10,7 @@ import AdminLayout     from './components/admin/AdminLayout'
 import BookingPage      from './pages/client/BookingPage'
 import ConfirmationPage from './pages/client/ConfirmationPage'
 import PrivateBookingPage from './pages/client/PrivateBookingPage'
-import BookingSettingsPage from './pages/admin/BookingSettingsPage'
+const BookingSettingsPage = lazy(() => import('./pages/admin/BookingSettingsPage'))
 import { configured } from './services/supabase'
 import LoginPage        from './pages/auth/LoginPage'
 
@@ -62,7 +63,7 @@ export default function App() {
               <AdminDashboard />
             </ProtectedRoute>
           } />
-          <Route path="configuracion" element={<BookingSettingsPage />} />
+          <Route path="configuracion" element={<Suspense fallback={<p role="status" className="muted">Cargando agenda…</p>}><BookingSettingsPage /></Suspense>} />
           <Route path="citas"     element={<AdminAppointments />} />
           <Route path="barberos"  element={
             <ProtectedRoute adminOnly><AdminBarbers /></ProtectedRoute>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import toast from '../../services/toast'
 import { servicesApi } from '../../services/api'
 import type { Service } from '../../types'
@@ -103,6 +104,7 @@ export default function AdminServices() {
         <h1 className={styles.title}>Servicios</h1>
         <button className={styles.btnNew} onClick={openCreate}>+ Agregar servicio</button>
       </div>
+      <p className="muted">Después de crear un servicio, asígnalo a un barbero y guarda su horario en <Link to="/admin/configuracion" style={{ color: 'var(--accent-light)', textDecoration: 'underline' }}>Agenda y horarios</Link> para habilitar las reservas.</p>
 
       {loading ? (
         <div className={styles.loader}><div className="spinner" /></div>

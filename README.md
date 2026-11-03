@@ -26,7 +26,17 @@ Las variables VITE_ se incorporan durante la compilacion: despues de cambiarlas 
 
 Referencias: [Vite en Vercel](https://vercel.com/docs/frameworks/frontend/vite), [Node.js en Vercel](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions) y [variables de Vite](https://vite.dev/guide/env-and-mode).
 
-## Verificacion
+## Configurar la agenda desde el sistema
+
+Entrar en el panel y abrir **Agenda y horarios**, o pulsar **Agenda** en la tarjeta de un barbero. Seleccionar el profesional y completar los tres indicadores de la pantalla:
+
+1. **Cuenta de personal:** vincular una cuenta de barbero sin asignar o crearla en esa misma pantalla. Las cuentas inactivas o vencidas se gestionan en Usuarios.
+2. **Servicios:** marcar los servicios que ofrece ese profesional. Crear un servicio por si solo no lo asigna ni define horas de trabajo.
+3. **Horario semanal:** elegir uno o varios dias, indicar inicio y fin y guardar. Cada regla guardada tiene acciones para editarla o eliminarla. El mismo editor permite guardar descansos y vacaciones o bloqueos con fecha.
+
+Todos los horarios se interpretan en Costa Rica. No se cargan horas de trabajo por defecto. Las citas existentes se conservan al cambiar las reglas. El cliente vera los espacios que cumplan las reglas, la anticipacion minima y la disponibilidad real.
+
+## Pruebas
 
 ```sh
 npm run build

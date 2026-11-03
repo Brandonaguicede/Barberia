@@ -1,5 +1,6 @@
 export interface Barber {
   id: string;
+  user_id?: string | null;
   name: string;
   specialty?: string;
   phone?: string;

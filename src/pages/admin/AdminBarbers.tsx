@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { CalendarDays } from 'lucide-react'
 import toast from '../../services/toast'
 import { barbersApi } from '../../services/api'
 import type { Barber } from '../../types'
@@ -112,6 +114,7 @@ export default function AdminBarbers() {
 
               <div className={styles.cardActions}>
                 <button className={styles.btnEdit} onClick={() => openEdit(b)}>✎ Editar</button>
+                <Link className={styles.btnEdit} to={`/admin/configuracion?barbero=${b.id}`} aria-label={`Configurar agenda de ${b.name.trim()}`}><CalendarDays size={15} aria-hidden="true" /> Agenda</Link>
                 {b.active === 1 && (
                   <button className={styles.btnDeactivate} onClick={() => handleDelete(b)}>Desactivar</button>
                 )}
