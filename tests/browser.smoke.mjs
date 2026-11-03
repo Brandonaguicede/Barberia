@@ -26,7 +26,15 @@ test('reserva y enlace privado en escritorio y móvil (API simulada)',async()=>{
  await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(data)})
  })
  await page.goto(base)
- await page.getByRole('button',{name:/Corte clásico/}).click()
+ await page.getByLabel('Servicio',{exact:true}).selectOption('service-1')
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false)
+ await page.screenshot({path:`.npm-cache/screenshots/booking-${device}.png`,fullPage:true,animations:'disabled'})
+ if(device==='mobile'){
+  await page.getByRole('button',{name:'Abrir menú',exact:true}).click()
+  assert.equal(await page.getByRole('button',{name:'Cerrar menú',exact:true}).getAttribute('aria-expanded'),'true')
+  await page.keyboard.press('Escape')
+  assert.equal(await page.getByRole('button',{name:'Abrir menú',exact:true}).getAttribute('aria-expanded'),'false')
+ }
  await page.getByRole('button',{name:'Continuar',exact:true}).click()
  await page.getByLabel('Fecha de la cita').fill(date)
  await page.getByRole('button',{name:'9:00 am',exact:true}).click()

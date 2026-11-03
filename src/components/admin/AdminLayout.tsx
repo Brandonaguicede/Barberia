@@ -4,7 +4,7 @@ import toast from '../../services/toast'
 import { useAuth } from '../../context/AuthContext'
 import styles from './AdminLayout.module.css'
 import NotificationCenter from './NotificationCenter'
-import logo from '../../imagenes/logo2.png'
+const logo = '/images/tenorio_barber.svg'
 
 export default function AdminLayout() {
   const { user, logout, isAdmin } = useAuth()
@@ -35,7 +35,7 @@ export default function AdminLayout() {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTop}>
           <Link to={isAdmin ? '/admin' : '/admin/citas'} className={styles.logo}>
-            <img src={logo} alt="Angel Barber-Shops" className={styles.logoImg} />
+            <picture><source media="(max-width: 820px)" srcSet="/icons/tenorio.svg" /><img src={logo} alt="Tenorio Barber" className={styles.logoImg} /></picture>
             <span className={styles.logoText}>Control</span>
           </Link>
 

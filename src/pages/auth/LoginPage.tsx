@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertCircle, LockKeyhole, LogIn, Mail } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import styles from './LoginPage.module.css'
-import logo from '../../imagenes/logo2.png'
+const logo = '/images/tenorio_barber.svg'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -31,7 +31,7 @@ export default function LoginPage() {
     <div className={styles.root}>
       <section className={styles.card}>
         <div className={styles.logoWrap}>
-          <img src={logo} alt="Angel Barber-Shops" className={styles.logo} />
+          <img src={logo} alt="Tenorio Barber" className={styles.logo} />
           <h1 className={styles.title}>Acceso administrativo</h1>
           <p className={styles.subtitle}>Ingresa con tus credenciales para gestionar citas, servicios y usuarios.</p>
         </div>

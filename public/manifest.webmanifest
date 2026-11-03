@@ -1,13 +1,13 @@
 {
   "id": "/",
-  "name": "Angel Barber Shop",
-  "short_name": "Angel Barber",
+  "name": "Tenorio Barber",
+  "short_name": "Tenorio",
   "lang": "es-CR",
   "start_url": "/admin/citas",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#171717",
-  "theme_color": "#171717",
+  "background_color": "#0e1217",
+  "theme_color": "#0e1217",
   "icons": [
     {
       "src": "/icons/icon-192.png",

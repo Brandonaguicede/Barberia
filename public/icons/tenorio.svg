@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="160 -234 880 880"><rect x="160" y="-234" width="880" height="880" rx="180" fill="#10151d"/><g id="simbolo" stroke-linejoin="round" stroke-linecap="round">
+  <!-- franjas blancas y rojas a cada lado -->
+  <path d="M311 246 H362 L319 284 H268 Z" fill="#FFFFFF"/>
+  <path d="M380 246 H431 L388 284 H337 Z" fill="#ED2939"/>
+  <path d="M769 246 H820 L863 284 H812 Z" fill="#ED2939"/>
+  <path d="M838 246 H889 L932 284 H881 Z" fill="#FFFFFF"/>
+  <!-- tijera izquierda, mango superior izquierdo, cuchilla hacia abajo a la derecha -->
+  <circle cx="520" cy="101" r="29" stroke="#FFFFFF" stroke-width="11" fill="none"/>
+  <path d="M540 122 L630 220 L704 308 Q653 283 613 247 L523 143 Z" fill="#FFFFFF"/>
+  <!-- tijera derecha, mango superior derecho, cuchilla hacia abajo a la izquierda -->
+  <circle cx="680" cy="101" r="29" stroke="#FFFFFF" stroke-width="11" fill="none"/>
+  <path d="M660 122 L570 220 L496 308 Q547 283 587 247 L677 143 Z" fill="#FFFFFF"/>
+  <!-- eje -->
+  <circle cx="600" cy="207" r="6.5" fill="#121318"/>
+</g></svg>

@@ -1,9 +1,9 @@
 
 .root { display:flex; min-height:100dvh; background:var(--bg); }
-.sidebar { width:240px; height:100dvh; position:sticky; top:0; background:var(--bg-card); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+.sidebar { width:240px; height:100dvh; position:sticky; top:0; background:linear-gradient(145deg,#ffffff04,transparent),#131921; border-right:1px solid #ffffff1a; display:flex; flex-direction:column; flex-shrink:0; }
 .sidebarTop { flex:1; padding:28px 16px; overflow-y:auto; }
-.logo { display:flex; align-items:center; gap:16px; margin-bottom:36px; padding:0 10px; }
-.logoImg { width:74px; height:auto; display:block; }
+.logo { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:31px; padding:0 10px; }
+.logoImg { width:133px; height:auto; display:block; }
 .logoText { color:var(--text-dim); font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
 .nav { display:flex; flex-direction:column; gap:6px; }
 .navItem { display:flex; gap:12px; align-items:center; min-height:46px; padding:12px; border-radius:10px; color:var(--text-muted); font-size:13px; font-weight:600; border:1px solid transparent; transition:color 160ms var(--ease-out),background-color 160ms var(--ease-out),border-color 160ms var(--ease-out); }

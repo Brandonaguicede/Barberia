@@ -1,50 +1,21 @@
-import fs from "node:fs";
-import zlib from "node:zlib";
-// Code-native monogram, without generated raster artwork or new branding.
-const crc = (buffer) => {
-  let c = 0xffffffff;
-  for (const b of buffer) {
-    c ^= b;
-    for (let i = 0; i < 8; i++) c = (c >>> 1) ^ ((c & 1) ? 0xedb88320 : 0);
+import fs from 'node:fs/promises'
+import { chromium } from 'playwright'
+
+// Rasterize the supplied vector brand symbol for installable PWA icons.
+// Use ICON_BROWSER to select an existing Chromium when Playwright is not installed.
+const svg = await fs.readFile('public/icons/tenorio.svg', 'utf8')
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.ICON_BROWSER ? { executablePath: process.env.ICON_BROWSER } : {}),
+})
+try {
+  const page = await browser.newPage({ deviceScaleFactor: 1 })
+  for (const size of [192, 512]) {
+    await page.setViewportSize({ width: size, height: size })
+    await page.setContent(`<style>html,body{margin:0;background:#10151d}img{display:block;width:100vw;height:100vh}</style><img alt="" src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}">`)
+    await page.locator('img').evaluate(image => image.decode())
+    await page.screenshot({ path: `public/icons/icon-${size}.png` })
   }
-  return (c ^ 0xffffffff) >>> 0;
-};
-function chunk(type, data) {
-  const name = Buffer.from(type), len = Buffer.alloc(4), sum = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  sum.writeUInt32BE(crc(Buffer.concat([name, data])));
-  return Buffer.concat([len, name, data, sum]);
-}
-fs.mkdirSync("public/icons", { recursive: true });
-for (const size of [192, 512]) {
-  const raw = Buffer.alloc(size * (size * 4 + 1));
-  for (let y = 0; y < size; y++) {
-    raw[y * (size * 4 + 1)] = 0;
-    for (let x = 0; x < size; x++) {
-      const px = x / size, py = y / size;
-      const inA = py > .25 && py < .75 &&
-        ((Math.abs(px - (.5 - (py - .25) * .4)) < .035) ||
-          (Math.abs(px - (.5 + (py - .25) * .4)) < .035) ||
-          (py > .55 && py < .60 && px > .36 && px < .64));
-      const i = y * (size * 4 + 1) + 1 + x * 4;
-      raw[i] = inA ? 242 : 16;
-      raw[i + 1] = inA ? 138 : 14;
-      raw[i + 2] = inA ? 148 : 15;
-      raw[i + 3] = 255;
-    }
-  }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8;
-  ihdr[9] = 6;
-  fs.writeFileSync(
-    `public/icons/icon-${size}.png`,
-    Buffer.concat([
-      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-      chunk("IHDR", ihdr),
-      chunk("IDAT", zlib.deflateSync(raw)),
-      chunk("IEND", Buffer.alloc(0)),
-    ]),
-  );
+} finally {
+  await browser.close()
 }

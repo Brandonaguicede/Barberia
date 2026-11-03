@@ -22,7 +22,7 @@ export const privateUrl = (token: string) =>
   `${window.location.origin}/mi-cita/${encodeURIComponent(token)}`;
 export function whatsappMessage(a: Appointment, url: string) {
   return `Hola, esta es la información de mi reserva:\n\nBarbería: ${
-    a.shop_name || "ANGEL BARBER SHOP"
+    a.shop_name || "TENORIO BARBER"
   }\nServicio: ${a.service_name}\nBarbero: ${a.barber_name}\nFecha: ${a.appointment_date}\nHora: ${a.appointment_time}\n\nConsultar, cancelar o reprogramar mi cita:\n${url}\n\n¡Gracias!`;
 }
 const escapeICS = (v: string) =>
@@ -39,7 +39,7 @@ export function calendarFile(a: Appointment) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Angel Barber//Reservas//ES",
+    "PRODID:-//Tenorio Barber//Reservas//ES",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `UID:${a.id}@angel-barber`,
@@ -47,7 +47,7 @@ export function calendarFile(a: Appointment) {
     `DTSTART:${format(start)}`,
     `DTEND:${format(end)}`,
     `SUMMARY:${escapeICS(`${a.service_name} - ${a.barber_name}`)}`,
-    `DESCRIPTION:${escapeICS(a.shop_name || "ANGEL BARBER SHOP")}`,
+    `DESCRIPTION:${escapeICS(a.shop_name || "TENORIO BARBER")}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ];

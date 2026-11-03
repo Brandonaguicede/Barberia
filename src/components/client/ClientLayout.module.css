@@ -1,16 +1,23 @@
-
-.root { min-height:100dvh; display:flex; flex-direction:column; background:var(--bg); }
-.header { border-bottom:1px solid var(--border); background:var(--bg); }
-.headerInner { max-width:1040px; margin:0 auto; padding:0 32px; height:88px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-.logo { display:flex; align-items:center; gap:14px; text-decoration:none; }
-.logoImage { width:64px; height:64px; object-fit:contain; }
-.brandName { display:flex; flex-direction:column; color:var(--text); font-size:21px; line-height:1; font-weight:800; letter-spacing:-.035em; }
-.brandName span { color:var(--text-dim); font-size:9px; font-weight:650; letter-spacing:.18em; margin-top:8px; }
-.nav { display:flex; align-items:center; gap:16px; }
-.adminLink { display:inline-flex; gap:8px; align-items:center; padding:10px 14px; border:1px solid var(--border-light); border-radius:var(--radius); color:var(--text-muted); font-size:12px; font-weight:650; }
-.main { flex:1; max-width:960px; width:100%; margin:0 auto; padding:40px 32px 64px; }
-.footer { display:flex; justify-content:center; padding:24px; border-top:1px solid var(--border); color:var(--text-dim); font-size:11px; text-align:center; letter-spacing:.025em; }
-@media(hover:hover) and (pointer:fine) { .adminLink:hover { border-color:var(--accent-dim); color:var(--accent-light); background:var(--selection); } }
-@media(max-width:680px) { .headerInner { height:76px; padding:0 20px; } .logoImage { width:48px; height:48px; } .brandName { font-size:18px; } .brandName span { font-size:8px; } .logo { gap:10px; } .main { padding:26px 20px 44px; } .adminLink { padding:9px 11px; } .adminLink span { display:none; } }
-/* Smoked-glass header, preserving the booking layout. */
-.header { background:rgb(35 35 35 / .82); border-bottom:1px solid #ffffff18; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); box-shadow:inset 0 1px 0 #ffffff0c; }
+.root { min-height:100dvh; display:flex; flex-direction:column; position:relative; isolation:isolate; background:radial-gradient(ellipse at 77% 40%,#24262e28,transparent 55%),linear-gradient(125deg,#101318,#0c1014 55%,#101216); overflow:clip; }
+.root::before,.root::after { content:''; position:absolute; z-index:-1; pointer-events:none; width:780px; height:300px; border:1px solid #d52b3e3a; border-radius:50%; transform:rotate(-29deg); background:linear-gradient(180deg,#d5213510,transparent 65%); }
+.root::before { left:-650px; top:90px; box-shadow:0 25px 0 -24px #ed29394a; }
+.root::after { right:-540px; bottom:15px; box-shadow:0 32px 0 -31px #f2394c88,0 70px 0 -69px #ed293926; }
+.header { position:relative; z-index:20; border-bottom:1px solid #ffffff16; background:#0d1114b8; backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); box-shadow:0 1px 0 #ffffff03; }
+.headerInner { max-width:1320px; margin:0 auto; padding:0 32px; min-height:109px; display:flex; align-items:center; justify-content:space-between; gap:34px; }
+.logo { display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.logoImage { display:block; width:150px; height:91px; object-fit:contain; }
+.nav { display:flex; align-items:center; gap:clamp(9px,1.4vw,23px); }
+.navLink { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:9px 14px; border-radius:30px; color:#d1d1d8; font-size:12px; font-weight:650; border:1px solid transparent; white-space:nowrap; transition:background-color 180ms var(--ease-out),color 180ms var(--ease-out); }
+.navLink.activeLink { background:linear-gradient(115deg,#d92338,#bd122e); border-color:#ff667a3b; color:#fff9fa; box-shadow:inset 0 1px 0 #ffffff22; padding-inline:23px; }
+.adminLink { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:42px; padding:9px 18px; border:1px solid #a0a7b26b; border-radius:30px; color:#ecebf1; font-size:12px; font-weight:600; white-space:nowrap; box-shadow:inset 0 1px 0 #ffffff0b; background:#ffffff02; }
+.menuToggle { display:none; }
+.main { flex:1; width:100%; max-width:1320px; margin:0 auto; padding:42px 48px 46px; display:flex; flex-direction:column; justify-content:center; }
+.receiptMain { max-width:880px; padding-top:50px; }
+.footer { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; max-width:1224px; width:calc(100% - 96px); margin:0 auto; padding:19px 0 24px; border-top:1px solid #ffffff0c; color:#8d939f; font-size:9px; }
+.footer>span { display:flex; gap:8px; align-items:center; font-size:9px; letter-spacing:.13em; font-weight:750; }
+.skipLink { position:fixed; z-index:100; top:12px; left:12px; padding:12px 20px; border-radius:10px; background:#b61630; color:#fff8fa; transform:translateY(-160%); }
+.skipLink:focus { transform:translateY(0); }
+@media(hover:hover) and (pointer:fine) { .navLink:hover:not(.activeLink) { background:#ffffff07; color:#fff8fa; } .adminLink:hover { border-color:#ed6b7d; background:#ed29390c; } }
+@media(min-width:1500px) { .main { padding-top:52px; padding-bottom:58px; } }
+@media(max-width:1000px) { .headerInner { gap:18px; padding-inline:26px; } .nav { gap:3px; } .navLink { padding-inline:11px; font-size:11px; } .navLink.activeLink { padding-inline:17px; } .logoImage { width:132px; } .main { padding-inline:30px; } .adminLink { padding-inline:13px; font-size:11px; } }
+@media(max-width:760px) { .header { border-radius:0 0 25px 25px; border-color:#ffffff24; background:linear-gradient(130deg,#22262d80,#101318d9); } .headerInner { min-height:91px; padding:0 22px; display:grid; grid-template-columns:40px 1fr 40px; gap:10px; } .logoImage { width:135px; height:82px; } .menuToggle { display:grid; place-items:center; width:40px; height:40px; padding:0; color:#f3f2f7; background:transparent; border:1px solid transparent; border-radius:10px; } .adminLink { width:40px; height:40px; padding:0; border-radius:50%; border-color:#ffffff28; } .adminLink span { display:none; } .nav { display:none; } .navOpen { display:flex; position:absolute; top:calc(100% + 9px); left:18px; right:18px; flex-direction:column; align-items:stretch; gap:6px; padding:12px; border:1px solid #ffffff28; border-radius:18px; background:#171c24fa; box-shadow:0 20px 55px #0305098c; } .navLink { justify-content:flex-start; min-height:46px; font-size:13px; padding-inline:17px; border-radius:10px; } .main { padding:30px 20px 32px; justify-content:flex-start; } .receiptMain { padding-top:32px; } .footer { width:calc(100% - 40px); padding-top:20px; justify-content:center; flex-direction:column; font-size:8px; } .root::after { right:-670px; bottom:40px; } }

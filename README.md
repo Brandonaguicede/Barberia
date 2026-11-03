@@ -1,6 +1,6 @@
-# Angel Barber Shop
+# Tenorio Barber
 
-Aplicacion de reservas y administracion de barberia con React, TypeScript, Vite y Supabase. Incluye citas por enlace privado, gestion de personal, servicios y horarios, y un tema oscuro con acentos rojos y cristal ahumado.
+Aplicacion de reservas y administracion de barberia con React, TypeScript, Vite y Supabase. Incluye citas por enlace privado, gestion de personal, servicios y horarios, y el estilo Tenorio Barber con logo SVG, iconos, cristal oscuro y acentos rojos.
 
 ## Desarrollo local
 
