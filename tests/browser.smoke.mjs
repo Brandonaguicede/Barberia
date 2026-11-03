@@ -18,8 +18,8 @@ test('reserva y enlace privado en escritorio y móvil (API simulada)',async()=>{
  await context.route('**/functions/v1/booking',async route=>{
  const b=route.request().postDataJSON();let data
  if(b.action==='catalog')data={barbers:[{id:'barber-1',name:'Ángel',active:true}],services:[{id:'service-1',name:'Corte clásico',duration:45,price:8000,category:'corte',active:true}],barber_services:[{barber_id:'barber-1',service_id:'service-1'}],settings:{shop_name:'ANGEL BARBER SHOP',horizon_days:90}}
- else if(b.action==='slots')data=[{barber_id:'barber-1',starts_at:date+'T15:00:00Z'},{barber_id:'barber-1',starts_at:date+'T16:00:00Z'}]
- else if(b.action==='create'){createCount++;data=current}
+ else if(b.action==='slots')data=b.date===date?[{barber_id:'barber-1',starts_at:date+'T15:00:00Z'},{barber_id:'barber-1',starts_at:date+'T16:00:00Z'}]:[]
+ else if(b.action==='create'){assert.equal(b.appointment.barber_id,'barber-1');createCount++;data=current}
  else if(b.action==='reschedule'){current={...current,appointment_time:b.appointment.appointment_time,access_token:nextToken};data=current}
  else if(b.action==='cancel'){current={...current,status:'cancelled',can_cancel:false,can_reschedule:false};data=current}
  else data=current
@@ -27,6 +27,8 @@ test('reserva y enlace privado en escritorio y móvil (API simulada)',async()=>{
  })
  await page.goto(base)
  await page.getByLabel('Servicio',{exact:true}).selectOption('service-1')
+ assert.equal(await page.getByRole('button',{name:/Cualquiera disponible/}).count(),0)
+ assert.equal(await page.getByRole('button',{name:/Ángel/}).getAttribute('aria-pressed'),'true')
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false)
  await page.screenshot({path:`.npm-cache/screenshots/booking-${device}.png`,fullPage:true,animations:'disabled'})
  if(device==='mobile'){
@@ -36,7 +38,12 @@ test('reserva y enlace privado en escritorio y móvil (API simulada)',async()=>{
   assert.equal(await page.getByRole('button',{name:'Abrir menú',exact:true}).getAttribute('aria-expanded'),'false')
  }
  await page.getByRole('button',{name:'Continuar',exact:true}).click()
- await page.getByLabel('Fecha de la cita').fill(date)
+ await page.getByRole('grid',{name:'Fecha de la cita'}).waitFor()
+ if(date.slice(0,7)!==localDate().slice(0,7))await page.getByRole('button',{name:'Mes siguiente',exact:true}).click()
+ await page.locator(`[data-calendar-date="${date}"]`).click()
+ await page.getByRole('button',{name:'9:00 am',exact:true}).waitFor()
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false)
+ await page.screenshot({path:`.npm-cache/screenshots/calendar-${device}.png`,fullPage:true,animations:'disabled'})
  await page.getByRole('button',{name:'9:00 am',exact:true}).click()
  await page.getByRole('button',{name:'Continuar',exact:true}).click()
  await page.getByLabel('Nombre completo').fill('Ana Pérez')

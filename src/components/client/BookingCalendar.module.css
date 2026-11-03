@@ -1,0 +1,32 @@
+.wrapper { min-width:0; }
+.shortcuts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
+.shortcuts button { display:flex; flex-direction:column; gap:4px; align-items:flex-start; justify-content:center; padding:12px 13px; min-height:62px; border:1px solid #ffffff21; border-radius:12px; background:#ffffff03; color:#eeeaf1; font-size:12px; font-weight:700; text-align:left; }
+.shortcuts span { font-size:10px; color:#aeb4c1; font-weight:500; }
+.shortcuts .quickSelected { border-color:#f15b7085; background:#d9233817; }
+.quickSelected span { color:#ffc1ce; }
+.calendar { border:1px solid #ffffff1c; border-radius:17px; padding:18px; background:linear-gradient(140deg,#ffffff04,transparent),#12161d91; box-shadow:inset 0 1px 0 #ffffff04; }
+.monthNav { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:17px; }
+.monthNav p { font-size:8px; color:#969fad; letter-spacing:.15em; font-weight:750; margin-bottom:5px; }
+.monthNav h3 { font-size:19px; font-weight:750; letter-spacing:-.03em; color:#f4f1f7; }
+.monthNav h3::first-letter { text-transform:uppercase; }
+.monthButtons { display:flex; gap:7px; }
+.monthButtons button { display:grid; place-items:center; width:34px; height:35px; border:1px solid #ffffff24; border-radius:10px; color:#dfdce6; background:#ffffff04; }
+.monthButtons button:disabled { opacity:.25; cursor:not-allowed; }
+.grid { display:grid; gap:4px; }
+.weekRow { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; }
+.weekRow>[role=columnheader] { text-align:center; font-size:10px; color:#9ba4b3; font-weight:650; padding:0 0 8px; }
+.weekRow>[role=gridcell] { display:grid; place-items:center; min-width:0; }
+.day { display:grid; place-items:center; width:100%; max-width:45px; min-height:42px; border:1px solid transparent; border-radius:11px; background:transparent; color:#dcdde5; font-size:13px; font-weight:650; font-variant-numeric:tabular-nums; }
+.day.today:not(.selected) { border-color:#f45e7466; background:#ed293909; color:#ff98a9; }
+.day.selected { background:linear-gradient(135deg,#f13d56,#bd1532); color:#fff8fa; border-color:#ff7d9266; box-shadow:inset 0 1px 0 #ffffff1f,0 4px 12px #790b2426; }
+.day:disabled { color:#555e6c; cursor:not-allowed; }
+.day.outside { color:#3e4755; }
+.legend { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:15px; margin-top:12px; border-top:1px solid #ffffff0e; }
+.legend span { display:flex; align-items:center; gap:7px; font-size:9px; color:#a5aebb; }
+.legend i { width:7px; height:7px; border:1px solid #f45e74; border-radius:50%; }
+.legend span:last-child i { background:#ed3651; }
+.dateSummary { margin-top:13px; color:#dcd5e1; font-size:12px; font-weight:650; line-height:1.7; }
+.dateSummary::first-letter { text-transform:uppercase; }
+@media(hover:hover) and (pointer:fine) { .day:hover:not(:disabled):not(.selected) { background:#ffffff09; border-color:#ffffff24; } .shortcuts button:hover { border-color:#e45b7280; } .monthButtons button:hover:not(:disabled) { border-color:#e45b7280; } }
+@media(max-width:760px) { .calendar { padding:15px 12px; } .day { min-height:39px; font-size:12px; border-radius:10px; } .monthNav h3 { font-size:18px; } .shortcuts button { padding:11px 10px; font-size:11px; } .shortcuts span { font-size:9px; } .monthNav { margin-bottom:15px; } .dateSummary { font-size:11px; } }
+@media(max-width:360px) { .calendar { padding:13px 9px; } .weekRow { gap:1px; } .day { min-height:36px; font-size:11px; } .monthNav h3 { font-size:16px; } .monthButtons button { width:30px; height:33px; } .shortcuts button { font-size:10px; padding:10px 8px; } }

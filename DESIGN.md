@@ -16,4 +16,6 @@ Logo y colores aplicados a reservas, acceso del personal, administracion, compro
 
 ## Validacion
 
+La reserva muestra solo barberos reales. Si existe una unica opcion de servicio o profesional, se preselecciona sin confirmar ninguna cita. La fecha usa un calendario propio con atajos, navegacion mensual y por teclado, limites del horizonte configurado y horas reales separadas por manana y tarde. En escritorio amplio, fecha y horas aparecen lado a lado; en movil, la introduccion se oculta tras el primer paso. Nombre y telefono son los unicos datos de contacto obligatorios; correo y notas estan en una seccion opcional. Las consultas anteriores de horas no pueden sobrescribir una fecha mas reciente.
+
 Compilacion, TypeScript, lint y pruebas de utilidades. Flujo con API simulada en escritorio y movil: reservar, enlace privado, reprogramar y cancelar; menu movil y ausencia de desbordamiento horizontal. Las capturas de docs/design usan datos simulados, no precios ni personal publicados en Supabase.

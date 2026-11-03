@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import toast from '../../services/toast'
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Clock3, Scissors, ShieldCheck, UserRound, UsersRound } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Clock3, Scissors, ShieldCheck, UserRound } from 'lucide-react'
 import { localDate } from '../../utils/booking'
+import { addCalendarDays } from '../../utils/calendar'
+import BookingCalendar from '../../components/client/BookingCalendar'
 import { catalogApi, appointmentsApi } from '../../services/api'
 import type { Barber, Service } from '../../types'
 import { FormField, Input, TextArea } from '../../components/shared/FormField'
@@ -35,15 +37,16 @@ export default function BookingPage() {
   const [step, setStep] = useState<Step>(1)
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [services, setServices] = useState<Service[]>([])
-  const [slots, setSlots] = useState<string[]>([])
+  const [slotResult, setSlotResult] = useState<{ key: string; slots: string[]; loading: boolean; error: string }>({ key: '', slots: [], loading: false, error: '' })
+  const [slotAttempt, setSlotAttempt] = useState(0)
+  const [horizonDays, setHorizonDays] = useState(90)
   const [loadError, setLoadError] = useState('')
   const [loadingCatalog, setLoadingCatalog] = useState(true)
   const [catalogAttempt, setCatalogAttempt] = useState(0)
   const [links, setLinks] = useState<{barber_id:string;service_id:string}[]>([])
-  const [loadingSlots, setLoadingSlots] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<FormData>({
-    barber_id: 'any', service_id: '', appointment_date: '',
+    barber_id: '', service_id: '', appointment_date: '',
     appointment_time: '', client_name: '', client_phone: '',
     client_email: '', notes: '',
   })
@@ -53,7 +56,16 @@ export default function BookingPage() {
     setLoadingCatalog(true)
     setLoadError('')
     catalogApi.get()
-      .then(c => { if (live) { setBarbers(c.barbers); setServices(c.services); setLinks(c.barber_services) } })
+      .then(c => { if (live) {
+        setBarbers(c.barbers); setServices(c.services); setLinks(c.barber_services); setHorizonDays(c.settings.horizon_days)
+        setForm(current => {
+          const available = c.services.filter(s => c.barber_services.some(l => l.service_id === s.id && c.barbers.some(b => b.id === l.barber_id)))
+          const serviceId = available.some(s => s.id === current.service_id) ? current.service_id : available.length === 1 ? available[0].id : ''
+          const matching = c.barbers.filter(b => c.barber_services.some(l => l.barber_id === b.id && (!serviceId || l.service_id === serviceId)))
+          const barberId = matching.some(b => b.id === current.barber_id) ? current.barber_id : matching.length === 1 ? matching[0].id : ''
+          return { ...current, service_id: serviceId, barber_id: barberId, appointment_time: '' }
+        })
+      } })
       .catch(() => { if (live) setLoadError('No pudimos cargar la agenda. Comprueba tu conexión e inténtalo de nuevo.') })
       .finally(() => { if (live) setLoadingCatalog(false) })
     return () => { live = false }
@@ -69,22 +81,19 @@ export default function BookingPage() {
 
   useEffect(() => {
     let live = true
-    setSlots([])
-    setLoadingSlots(false)
-    setForm(f => ({ ...f, appointment_time: '' }))
+    const key = `${form.barber_id}|${form.service_id}|${form.appointment_date}`
     if (form.barber_id && form.appointment_date && form.service_id) {
-      setLoadingSlots(true)
+      setSlotResult({ key, slots: [], loading: true, error: '' })
       appointmentsApi.getAvailableSlots({
         barber_id: form.barber_id,
         date: form.appointment_date,
         service_id: form.service_id,
       })
-        .then(s => { if (live) setSlots(s) })
-        .catch(() => toast.error('Error al cargar horarios'))
-        .finally(() => { if (live) setLoadingSlots(false) })
+        .then(slots => { if (live) setSlotResult({ key, slots, loading: false, error: '' }) })
+        .catch(() => { if (live) setSlotResult({ key, slots: [], loading: false, error: 'No pudimos consultar las horas. Comprueba tu conexión y vuelve a intentar.' }) })
     }
     return () => { live = false }
-  }, [form.barber_id, form.appointment_date, form.service_id])
+  }, [form.barber_id, form.appointment_date, form.service_id, slotAttempt])
 
   const set = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
@@ -92,7 +101,12 @@ export default function BookingPage() {
   const selectedBarber = barbers.find(b => b.id === form.barber_id)
   const selectedService = services.find(s => s.id === form.service_id)
 
-  const eligibleServices = services.filter(s => form.barber_id === 'any' ? links.some(l => l.service_id === s.id) : links.some(l => l.barber_id === form.barber_id && l.service_id === s.id))
+  const eligibleServices = services.filter(s => links.some(l => l.service_id === s.id && barbers.some(b => b.id === l.barber_id)))
+  const eligibleBarbers = barbers.filter(b => links.some(l => l.barber_id === b.id && (!form.service_id || l.service_id === form.service_id)))
+  const selectService = (id: string) => setForm(current => {
+    const matching = barbers.filter(b => links.some(l => l.barber_id === b.id && l.service_id === id))
+    return { ...current, service_id: id, barber_id: matching.some(b => b.id === current.barber_id) ? current.barber_id : matching.length === 1 ? matching[0].id : '', appointment_time: '' }
+  })
   const servicesByCategory = eligibleServices.reduce<Record<string, Service[]>>((acc, s) => {
     if (!acc[s.category]) acc[s.category] = []
     acc[s.category].push(s)
@@ -100,6 +114,14 @@ export default function BookingPage() {
   }, {})
 
   const today = localDate()
+  const maxDate = addCalendarDays(today, horizonDays)
+  const slotKey = `${form.barber_id}|${form.service_id}|${form.appointment_date}`
+  const slots = slotResult.key === slotKey ? slotResult.slots : []
+  const loadingSlots = Boolean(form.appointment_date && (slotResult.key !== slotKey || slotResult.loading))
+  const slotsError = slotResult.key === slotKey ? slotResult.error : ''
+  const morningSlots = slots.filter(time => Number(time.split(':')[0]) < 12)
+  const afternoonSlots = slots.filter(time => Number(time.split(':')[0]) >= 12)
+  const selectDate = (date: string) => setForm(current => ({ ...current, appointment_date: date, appointment_time: '' }))
 
   const formatTime = (t: string) => {
     const [h, m] = t.split(':').map(Number)
@@ -112,9 +134,9 @@ export default function BookingPage() {
     new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 }).format(p)
 
   const canGoNext = () => {
-    if (step === 1) return !!selectedService && eligibleServices.some(s => s.id === form.service_id) && barbers.some(b => links.some(l => l.barber_id === b.id && l.service_id === form.service_id) && (form.barber_id === 'any' || b.id === form.barber_id))
-    if (step === 2) return !!form.appointment_date && !!form.appointment_time
-    if (step === 3) return form.client_name.trim().length > 0 && /^\+?[0-9 ()-]{8,25}$/.test(form.client_phone)
+    if (step === 1) return !!selectedService && !!selectedBarber && eligibleBarbers.some(b => b.id === form.barber_id)
+    if (step === 2) return !!form.appointment_date && form.appointment_date >= today && form.appointment_date <= maxDate && !loadingSlots && slots.includes(form.appointment_time)
+    if (step === 3) return form.client_name.trim().length > 0 && /^\+?[0-9 ()-]{8,25}$/.test(form.client_phone) && form.client_phone.replace(/\D/g, '').length >= 8
     return false
   }
 
@@ -136,12 +158,16 @@ export default function BookingPage() {
   const stepIcons = [Scissors, CalendarDays, UserRound, Check]
   const stepDescriptions = ['Selecciona el servicio que deseas y el profesional.', 'Encuentra un espacio que se ajuste a tu agenda.', 'Completa tus datos para identificar tu reserva.', 'Revisa los detalles. Ya casi está todo listo.']
   const changeStep = (next: Step) => {
+    if (next === 2 && (!form.appointment_date || form.appointment_date < today || form.appointment_date > maxDate)) selectDate(today)
     setStep(next)
-    requestAnimationFrame(() => document.getElementById('booking-step-title')?.focus({ preventScroll: true }))
+    requestAnimationFrame(() => {
+      document.getElementById('booking-step-title')?.focus({ preventScroll: true })
+      document.getElementById('reservar')?.scrollIntoView({ block: 'start', behavior: 'instant' })
+    })
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${step > 1 ? styles.inProgress : ''}`}>
       <section className={styles.hero} aria-labelledby="booking-title">
         <p className={styles.eyebrow}><span /> TU ESTILO EMPIEZA AQUÍ</p>
         <h1 id="booking-title" className={styles.heroTitle}>Reserva tu <span>cita.</span></h1>
@@ -163,7 +189,7 @@ export default function BookingPage() {
           const Icon = stepIcons[i]
           return (
             <li key={n} aria-current={active ? 'step' : undefined} className={`${styles.stepItem} ${active ? styles.stepActive : ''} ${done ? styles.stepDone : ''}`}>
-              <div className={styles.stepCircle}>{done ? <Check size={23} aria-hidden="true" /> : <Icon size={23} aria-hidden="true" />}</div>
+              {done ? <button type="button" className={styles.stepCircle} aria-label={`Volver a ${label}`} disabled={submitting} onClick={() => changeStep(n)}><Check size={23} aria-hidden="true" /></button> : <span className={styles.stepCircle}><Icon size={23} aria-hidden="true" /></span>}
               <span className={styles.stepLabel}>{label}</span>
             </li>
           )
@@ -185,7 +211,7 @@ export default function BookingPage() {
                 <Scissors size={25} aria-hidden="true" />
                 <div className={styles.serviceInfo} aria-hidden="true"><span className={styles.serviceName}>{selectedService?.name || 'Selecciona tu servicio'}</span><span className={styles.serviceDesc}>{selectedService ? `${selectedService.duration} min  ·  ${formatPrice(selectedService.price)}` : 'Elige el corte o tratamiento para tu visita'}</span></div>
                 <ChevronDown size={20} aria-hidden="true" />
-                <select id="booking-service" value={form.service_id} onChange={e => setForm(f => ({ ...f, service_id: e.target.value }))} required>
+                <select id="booking-service" value={form.service_id} onChange={e => selectService(e.target.value)} required>
                   <option value="" disabled>Selecciona tu servicio</option>
                   {Object.entries(servicesByCategory).map(([cat, svcs]) => <optgroup key={cat} label={CATEGORY_LABELS[cat] || cat}>{svcs.map(s => <option key={s.id} value={s.id}>{s.name} · {s.duration} min · {formatPrice(s.price)}</option>)}</optgroup>)}
                 </select>
@@ -194,13 +220,12 @@ export default function BookingPage() {
             <div className={styles.section} id="barberos" role="group" aria-labelledby="barber-label">
               <p className={styles.sectionLabel} id="barber-label"><UserRound size={21} aria-hidden="true" />Barbero</p>
               <div className={styles.barberGrid}>
-                <button aria-pressed={form.barber_id === 'any'} className={`${styles.barberCard} ${form.barber_id === 'any' ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, barber_id: 'any' }))}><span className={styles.barberAvatar}><UsersRound size={25} strokeWidth={1.6} aria-hidden="true" /></span><span className={styles.barberInfo}><span className={styles.barberName}>Cualquiera disponible</span><span className={styles.barberSpec}>Según el horario que elijas</span></span><span className={styles.checkMark} aria-hidden="true">{form.barber_id === 'any' && <Check size={17} />}</span></button>
-                {barbers.filter(b => !form.service_id || links.some(l => l.barber_id === b.id && l.service_id === form.service_id)).map(b => (
-                  <button key={b.id} aria-pressed={form.barber_id === b.id} className={`${styles.barberCard} ${form.barber_id === b.id ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, barber_id: b.id }))}>
+                {eligibleBarbers.map(b => (
+                  <button key={b.id} aria-pressed={form.barber_id === b.id} className={`${styles.barberCard} ${form.barber_id === b.id ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, barber_id: b.id, appointment_time: '' }))}>
                     <div className={styles.barberAvatar} aria-hidden="true">{b.name.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toLocaleUpperCase('es')}</div>
                     <div className={styles.barberInfo}>
                       <span className={styles.barberName}>{b.name}</span>
-                      <span className={styles.barberSpec}>{b.specialty || 'Elige tu profesional'}</span>
+                      <span className={styles.barberSpec}>{b.specialty || (form.barber_id === b.id ? 'Tu barbero para esta cita' : 'Reservar con este barbero')}</span>
                     </div>
                     <span className={styles.checkMark} aria-hidden="true">{form.barber_id === b.id && <Check size={17} />}</span>
                   </button>
@@ -213,37 +238,42 @@ export default function BookingPage() {
 
         {step === 2 && (
           <div className={styles.stepContent}>
-            <FormField label="Fecha de la cita" required>
-              <Input type="date" value={form.appointment_date} min={today} onChange={set('appointment_date')} />
-            </FormField>
+            <div className={styles.bookingContext}><span className={styles.contextIcon}><Scissors size={20} aria-hidden="true" /></span><div><strong>{selectedService?.name}</strong><span>Con {selectedBarber?.name.trim()} · {selectedService?.duration} min</span></div><button type="button" onClick={() => changeStep(1)}>Cambiar</button></div>
+            <div className={styles.dateTimeLayout}>
+            <BookingCalendar value={form.appointment_date} minDate={today} maxDate={maxDate} onChange={selectDate} />
             {form.appointment_date && (
-              <div className={styles.section}>
-                <p className={styles.sectionLabel}><Clock3 size={20} aria-hidden="true" />Horarios disponibles</p>
+              <div className={`${styles.section} ${styles.timesSection}`}>
+                <div className={styles.timesHeading}><p className={styles.sectionLabel}><Clock3 size={20} aria-hidden="true" />Elige tu hora</p>{!loadingSlots && !slotsError && slots.length > 0 && <span>{slots.length} {slots.length === 1 ? 'hora disponible' : 'horas disponibles'}</span>}</div>
                 {loadingSlots ? (
                   <div className={styles.skeletons} role="status" aria-label="Cargando horarios"><span /><span /></div>
+                ) : slotsError ? (
+                  <div className={styles.slotMessage} role="alert"><p>{slotsError}</p><button className={styles.retryBtn} onClick={() => setSlotAttempt(n => n + 1)}>Volver a intentar <ArrowRight size={16} aria-hidden="true" /></button></div>
                 ) : slots.length === 0 ? (
-                  <p className={styles.noSlots}>No hay horarios disponibles para este dia.</p>
+                  <div className={styles.slotMessage}><p>No quedan horas para este día.</p><span>Elige otra fecha y encontraremos un espacio para ti.</span>{form.appointment_date < maxDate && <button className={styles.retryBtn} onClick={() => selectDate(addCalendarDays(form.appointment_date, 1))}>Ver el siguiente día <ArrowRight size={16} aria-hidden="true" /></button>}</div>
                 ) : (
-                  <div className={styles.slotsGrid}>
-                    {slots.map(slot => (
+                  <div className={styles.timeGroups}>
+                    {[{ label: 'Por la mañana', entries: morningSlots }, { label: 'Por la tarde', entries: afternoonSlots }].filter(group => group.entries.length > 0).map(group => <div key={group.label}><p className={styles.timeGroupLabel}>{group.label}</p><div className={styles.slotsGrid}>{group.entries.map(slot => (
                       <button key={slot} aria-pressed={form.appointment_time === slot} className={`${styles.slotBtn} ${form.appointment_time === slot ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, appointment_time: slot }))}>
-                        {formatTime(slot)}
+                        {formatTime(slot)}{form.appointment_time === slot && <Check size={14} aria-hidden="true" />}
                       </button>
-                    ))}
+                    ))}</div></div>)}
                   </div>
                 )}
               </div>
             )}
+            </div>
           </div>
         )}
 
         {step === 3 && (
           <div className={styles.stepContent}>
             <div className={styles.formGrid}>
-              <FormField label="Nombre completo" required><Input placeholder="Ej: Juan Perez" value={form.client_name} onChange={set('client_name')} /></FormField>
-              <FormField label="Telefono" required><Input type="tel" placeholder="Ej: 8888-1234" value={form.client_phone} onChange={set('client_phone')} /></FormField>
+              <FormField label="Nombre completo" required><Input autoComplete="name" placeholder="Tu nombre y apellido" value={form.client_name} onChange={set('client_name')} /></FormField>
+              <FormField label="Telefono" required><Input type="tel" autoComplete="tel" inputMode="tel" placeholder="Ej: 8888-1234" value={form.client_phone} onChange={set('client_phone')} /></FormField>
+              <details className={styles.optionalFields}><summary>Añadir correo o una nota (opcional)</summary><div>
               <FormField label="Correo electrónico (opcional)"><Input type="email" autoComplete="email" placeholder="tu@correo.com" value={form.client_email} onChange={set('client_email')} /></FormField>
               <FormField label="Notas adicionales"><TextArea placeholder="Ej: preferencia de estilo o indicaciones." value={form.notes} onChange={set('notes')} /></FormField>
+              </div></details>
             </div>
           </div>
         )}
@@ -251,7 +281,7 @@ export default function BookingPage() {
         {step === 4 && (
           <div className={styles.stepContent}>
             <div className={styles.summary}>
-              <div className={styles.summaryRow}><span className={styles.summaryKey}>Barbero</span><span className={styles.summaryVal}>{selectedBarber?.name || 'Cualquier barbero disponible'}</span></div>
+              <div className={styles.summaryRow}><span className={styles.summaryKey}>Barbero</span><span className={styles.summaryVal}>{selectedBarber?.name}</span></div>
               <div className={styles.summaryRow}><span className={styles.summaryKey}>Servicio</span><span className={styles.summaryVal}>{selectedService?.name}</span></div>
               <div className={styles.summaryRow}><span className={styles.summaryKey}>Duracion</span><span className={styles.summaryVal}>{selectedService?.duration} minutos</span></div>
               <div className={styles.summaryRow}><span className={styles.summaryKey}>Precio</span><span className={`${styles.summaryVal} ${styles.gold}`}>{selectedService && formatPrice(selectedService.price)}</span></div>

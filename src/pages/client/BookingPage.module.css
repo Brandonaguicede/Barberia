@@ -56,7 +56,7 @@
 .btnBack { display:flex; align-items:center; justify-content:center; gap:7px; padding:12px 17px; border-radius:13px; border:1px solid #ffffff2a; background:#ffffff04; color:var(--text-muted); font-size:12px; font-weight:650; }
 .panelNote { display:flex; align-items:center; justify-content:center; gap:6px; color:#9da3ad; font-size:9px; text-align:center; margin-top:13px; }
 .slotsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(95px,1fr)); gap:9px; }
-.slotBtn { min-height:45px; padding:10px; border:1px solid #ffffff28; border-radius:9px; background:#ffffff04; font-size:12px; font-weight:650; }
+.slotBtn { display:flex; align-items:center; justify-content:center; gap:7px; min-height:46px; padding:11px 8px; border:1px solid #ffffff28; border-radius:10px; background:#ffffff04; font-size:13px; font-weight:650; }
 .slotBtn.selected { background:#9d2032; border-color:#ff6072; color:#fff9fb; }
 .slotsLoading { display:flex; justify-content:center; padding:24px; }
 .noSlots { padding:12px 0; font-size:13px; color:var(--text-muted); }
@@ -80,3 +80,24 @@
 @media(max-width:760px) { .page { grid-template-columns:1fr; gap:31px; max-width:570px; margin:0 auto; } .hero { padding:12px 7px 0; } .eyebrow { font-size:9px; margin-bottom:16px; } .heroTitle { font-size:clamp(48px,9vw,65px); max-width:none; } .heroSub { font-size:14px; max-width:37ch; margin-top:19px; padding-left:18px; } .benefits,.heroNote { display:none; } .bookingPanel { padding:0; border:none; background:none; box-shadow:none; border-radius:0; backdrop-filter:none; -webkit-backdrop-filter:none; scroll-margin-top:100px; } .stepper { padding:0 0 26px; } .stepCircle { width:45px; height:45px; } .stepItem:not(:last-child)::after { top:22px; } .stepLabel { font-size:11px; } .card { padding:22px 19px 24px; border-radius:20px; border-color:#ffffff1c; border-top-color:#ffffff2a; background:linear-gradient(130deg,#ffffff07,#ffffff01 60%),#11151be0; box-shadow:0 16px 50px #02030535,inset 0 1px 0 #ffffff05; } .stepTitle { font-size:21px; padding-left:17px; } .stepTitle::before { width:4px; } .stepDescription { font-size:11px; padding-left:17px; margin-bottom:23px; } .sectionLabel { font-size:15px; } .serviceSelect { padding:12px 14px; gap:12px; min-height:73px; } .serviceName { font-size:15px; } .serviceDesc { font-size:11px; } .barberCard { padding:11px 13px; gap:12px; } .barberName { font-size:14px; } .barberSpec { font-size:10px; } .barberAvatar { width:41px; height:41px; } .checkMark { width:25px; height:25px; } .actions { margin-top:20px; } .btnNext,.btnConfirm { min-height:57px; font-size:19px; } .panelNote { margin-top:14px; font-size:9px; } }
 @media(max-width:360px) { .card { padding:20px 15px; } .stepTitle { font-size:19px; } .heroTitle { font-size:47px; } .barberName { font-size:13px; } .barberCard { gap:9px; } .btnBack { padding:10px 13px; } }
 @media(prefers-reduced-motion:reduce) { .skeletons span { animation:none; } }
+.bookingContext { display:flex; align-items:center; gap:11px; padding:12px 13px; margin-bottom:20px; border:1px solid #ffffff12; border-radius:12px; background:#ffffff03; }
+.contextIcon { display:grid; place-items:center; width:36px; height:36px; color:#ff9bad; border-radius:10px; background:#db294216; flex-shrink:0; }
+.bookingContext>div { flex:1; min-width:0; }
+.bookingContext strong { display:block; font-size:12px; color:#edeaf1; font-weight:700; }
+.bookingContext span:not(.contextIcon) { display:block; font-size:10px; color:#a9b1bf; margin-top:3px; line-height:1.6; }
+.bookingContext button { flex-shrink:0; min-height:36px; padding:7px; background:none; color:#ff9aac; font-size:10px; font-weight:650; border-radius:7px; }
+.timesHeading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:7px; margin-bottom:13px; }
+.timesHeading .sectionLabel { margin-bottom:0; }
+.timesHeading>span { color:#a9b3c2; font-size:10px; }
+.timeGroups { display:grid; gap:17px; }
+.dateTimeLayout { min-width:0; }
+@media(min-width:1200px) { .dateTimeLayout { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr); align-items:start; gap:17px; } .timesSection { margin-top:0; } .timesSection .slotsGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; } .timesSection .slotBtn { font-size:11px; padding-inline:5px; } .timesSection .sectionLabel { font-size:14px; } .timesSection .timesHeading { flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:20px; } }
+.timeGroupLabel { color:#aab4c4; font-size:10px; font-weight:650; margin-bottom:9px; }
+.slotMessage { padding:18px 16px; border-radius:12px; border:1px solid #ffffff12; background:#ffffff03; }
+.slotMessage p { color:#e0dce6; font-size:13px; font-weight:650; line-height:1.8; }
+.slotMessage>span { display:block; color:#aeb5c2; font-size:11px; line-height:1.8; margin-top:5px; }
+.slotMessage .retryBtn { margin-top:13px; font-size:11px; }
+.optionalFields { border-top:1px solid #ffffff16; padding-top:17px; }
+.optionalFields summary { cursor:pointer; color:#b9b9c6; font-size:11px; line-height:1.8; }
+.optionalFields>div { display:flex; flex-direction:column; gap:17px; margin-top:17px; }
+@media(max-width:760px) { .inProgress .hero { display:none; } .inProgress { gap:0; } .bookingContext { padding:11px; gap:9px; } .contextIcon { width:32px; height:32px; } .bookingContext strong { font-size:11px; } .bookingContext span:not(.contextIcon) { font-size:9px; } .slotsGrid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .slotBtn { font-size:11px; } }
