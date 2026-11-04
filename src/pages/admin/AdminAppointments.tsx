@@ -146,7 +146,10 @@ export default function AdminAppointments() {
       await appointmentsApi.updateStatus(id, status)
       toast.success('Estado actualizado')
       fetchAll()
-    } catch { toast.error('Error al actualizar estado') }
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : ''
+      toast.error(reason ? `No se pudo actualizar el estado: ${reason}` : 'Error al actualizar estado')
+    }
   }
 
   const formatDate = (d: string) =>
