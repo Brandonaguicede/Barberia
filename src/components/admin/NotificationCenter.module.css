@@ -1,0 +1,23 @@
+.center { position:relative; }
+.center>summary { display:flex; align-items:center; gap:8px; width:max-content; list-style:none; }
+.center>summary::-webkit-details-marker { display:none; }
+.center>summary::marker { content:''; }
+.center>summary svg { display:none; flex:0 0 auto; }
+.summaryText { display:inline; }
+.badge { display:none; }
+.popover { min-width:0; }
+
+@media(max-width:767px) {
+  .center { position:fixed; z-index:70; top:calc(env(safe-area-inset-top) + 11px); right:12px; width:44px; height:44px; padding:0; margin:0; border:0; }
+  .center>summary { position:relative; display:flex; align-items:center; justify-content:center; width:44px; height:44px; padding:0; border:1px solid #ffffff2a; border-radius:50%; background:#171c23d9; color:var(--text); box-shadow:0 7px 19px #0005,inset 0 1px 0 #ffffff12; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); cursor:pointer; }
+  .center>summary svg { display:block; color:var(--text-muted); }
+  .summaryText { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+  .badge { position:absolute; top:-4px; right:-4px; display:grid; place-items:center; min-width:18px; height:18px; padding:0 4px; border:2px solid var(--bg); border-radius:20px; background:var(--primary); color:white; font-size:9px; font-weight:800; line-height:1; }
+  .popover { position:absolute; top:calc(100% + 9px); right:0; width:min(340px,calc(100vw - 24px)); max-height:min(70dvh,560px); overflow:auto; padding:13px; border:1px solid #ffffff25; border-radius:15px; background:#171c23f5; box-shadow:0 20px 55px #0009,inset 0 1px 0 #ffffff0a; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); }
+  .popover .action-button { width:100%; min-height:42px; margin-bottom:8px; font-size:11px; }
+  .popover>p { margin:5px 0 10px; color:var(--text-dim); font-size:10px; line-height:1.6; }
+  .popover>p[role="alert"] { color:#ffb2bd; }
+  .popover>ul { list-style:none; max-height:40dvh; overflow-y:auto; }
+  .popover li a { display:block; padding:10px 2px; border-top:1px solid #ffffff12; color:var(--text); font-size:11px; line-height:1.55; overflow-wrap:anywhere; }
+  .popover li a small { margin-top:4px; color:var(--text-dim); font-size:9px; }
+}

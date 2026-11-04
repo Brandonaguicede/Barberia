@@ -1,5 +1,6 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
-import { CalendarDays, LayoutDashboard, LogOut, Scissors, Settings, UserRound, UsersRound } from 'lucide-react'
+import { CalendarDays, LayoutDashboard, LogOut, MoreHorizontal, Scissors, Settings, UserRound, UsersRound } from 'lucide-react'
+import { useState } from 'react'
 import toast from '../../services/toast'
 import { useAuth } from '../../context/AuthContext'
 import styles from './AdminLayout.module.css'
@@ -9,6 +10,7 @@ const logo = '/images/tenorio_barber.svg'
 export default function AdminLayout() {
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -29,6 +31,8 @@ export default function AdminLayout() {
   ].filter(item => !item.adminOnly || isAdmin)
 
   const displayName = user?.username || user?.email || 'Usuario'
+  const mobilePrimaryItems = navItems.filter(item => item.to === '/admin/citas' || item.to === '/admin/configuracion' || (isAdmin && item.to === '/admin'))
+  const mobileExtraItems = navItems.filter(item => !mobilePrimaryItems.some(primary => primary.to === item.to))
 
   return (
     <div className={styles.root}>
@@ -76,6 +80,22 @@ export default function AdminLayout() {
           </div>
         </div>
       </aside>
+
+      <nav className={styles.mobileNav} aria-label="Navegación administrativa">
+        {mobilePrimaryItems.map(item => {
+          const Icon = item.icon
+          return <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setMobileMoreOpen(false)} className={({ isActive }) => `${styles.mobileNavItem} ${isActive ? styles.mobileNavActive : ''}`}><Icon size={19} strokeWidth={1.8} aria-hidden="true" /><span>{item.to === '/admin/citas' ? 'Citas' : item.to === '/admin/configuracion' ? 'Agenda' : 'Inicio'}</span></NavLink>
+        })}
+        <div className={styles.mobileMore}>
+          <button type="button" className={`${styles.mobileNavItem} ${mobileMoreOpen ? styles.mobileNavActive : ''}`} aria-expanded={mobileMoreOpen} onClick={() => setMobileMoreOpen(value => !value)}><MoreHorizontal size={20} strokeWidth={1.8} aria-hidden="true" /><span>Más</span></button>
+          {mobileMoreOpen && <div className={styles.mobileMorePanel}>
+            <div className={styles.mobileProfile}><span className={styles.userAvatar}><UserRound size={17} aria-hidden="true" /></span><span><strong>{displayName}</strong><small>{user?.role === 'Admin' ? 'Administrador' : 'Barbero'}</small></span></div>
+            {mobileExtraItems.map(item => { const Icon = item.icon; return <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setMobileMoreOpen(false)} className={({ isActive }) => `${styles.mobileExtraLink} ${isActive ? styles.mobileNavActive : ''}`}><Icon size={17} aria-hidden="true" />{item.label}</NavLink> })}
+            {isAdmin && <Link to="/" className={styles.mobileExtraLink} onClick={() => setMobileMoreOpen(false)}>Vista cliente</Link>}
+            <button className={styles.mobileExtraLink} onClick={() => { setMobileMoreOpen(false); void handleLogout() }}><LogOut size={17} aria-hidden="true" />Cerrar sesión</button>
+          </div>}
+        </div>
+      </nav>
 
       <main className={styles.main}>
         <NotificationCenter />

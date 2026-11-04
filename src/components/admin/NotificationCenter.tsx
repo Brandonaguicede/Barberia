@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Bell } from "lucide-react";
 import toast from "../../services/toast";
 import { supabase } from "../../services/supabase";
 import { disablePush, enablePush } from "../../services/push";
 import { useAuth } from "../../context/AuthContext";
+import styles from "./NotificationCenter.module.css";
 interface Notice {
   id: string;
   title: string;
@@ -93,10 +95,13 @@ export default function NotificationCenter() {
       );
     }
   };
+  const unreadCount = items.filter((n) => !n.read_at).length;
   return (
-    <details className="notification-center">
-      <summary>Avisos ({items.filter((n) => !n.read_at).length})</summary>
+    <details className={`notification-center ${styles.center}`}>
+      <summary aria-label={`Avisos, ${unreadCount} sin leer`}><Bell size={19} aria-hidden="true" /><span className={styles.summaryText}>Avisos ({unreadCount})</span>{unreadCount > 0 && <span className={styles.badge} aria-hidden="true">{unreadCount > 99 ? "99+" : unreadCount}</span>}</summary>
+      <div className={styles.popover}>
       <button
+        type="button"
         className="action-button"
         disabled={busy}
         onClick={() => void toggle()}
@@ -131,6 +136,7 @@ export default function NotificationCenter() {
           </li>
         ))}
       </ul>
+      </div>
     </details>
   );
 }

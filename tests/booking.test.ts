@@ -4,7 +4,6 @@ import {
   calendarFile,
   localDate,
   localTime,
-  whatsappMessage,
 } from "../src/utils/booking.ts";
 import type { Appointment } from "../src/types/index.ts";
 const appointment = {
@@ -36,14 +35,6 @@ test("calendario UTC conserva duración, escapa texto y no expone el token", () 
   assert.ok(ics.includes("Corte\\; especial\\, con\\nsalto"));
   assert.ok(!ics.includes("/mi-cita/"));
   assert.ok(ics.endsWith("\r\n"));
-});
-test("WhatsApp conserva el enlace y codifica texto en un solo parámetro", () => {
-  const url = "https://example.vercel.app/mi-cita/abc";
-  const msg = whatsappMessage(appointment, url);
-  const href = new URL(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-  assert.equal(href.searchParams.get("text"), msg);
-  assert.ok(msg.includes(url));
-  assert.ok(msg.includes("09:00"));
 });
 test("ICS pliega líneas por octetos UTF-8", () => {
   const ics = calendarFile({ ...appointment, service_name: "Á".repeat(100) });

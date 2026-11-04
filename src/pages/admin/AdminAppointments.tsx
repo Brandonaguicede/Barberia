@@ -8,6 +8,7 @@ import type { Appointment, Barber, Service, AppointmentStatus } from '../../type
 import Modal from '../../components/shared/Modal'
 import StatusBadge from '../../components/shared/StatusBadge'
 import { FormField, Input, Select, TextArea } from '../../components/shared/FormField'
+import { CalendarDays, Clock3, Eye, Pencil, Plus, SlidersHorizontal, X } from 'lucide-react'
 import styles from './AdminAppointments.module.css'
 
 const STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] = [
@@ -49,6 +50,8 @@ export default function AdminAppointments() {
   const [filterStatus, setFilterStatus] = useState('')
   const [filterDate,   setFilterDate]   = useState('')
   const [filterBarber, setFilterBarber] = useState('')
+  const [timePreset, setTimePreset] = useState<'all' | 'today' | 'upcoming' | 'custom'>('all')
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -160,44 +163,72 @@ export default function AdminAppointments() {
     new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 }).format(p)
 
   const today = localDate()
+  const activeFilterCount = Number(Boolean(filterDate)) + Number(Boolean(filterStatus)) + Number(Boolean(filterBarber))
+  const visibleAppointments = appointments.filter(a => timePreset !== 'upcoming' || a.appointment_date >= today)
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>{isAdmin ? 'Citas' : 'Mis Citas'}</h1>
-        <button className={styles.btnNew} onClick={openCreate}>+ Nueva cita</button>
+        <button className={styles.btnNew} onClick={openCreate}><Plus className={styles.newIcon} size={17} aria-hidden="true" /><span className={styles.desktopNewLabel}>+ Nueva cita</span><span className={styles.mobileNewLabel}>Nueva</span></button>
       </div>
 
       {selected && <Modal title="Detalle de cita" onClose={() => setSelected(null)}><p>{selected.client_name} · {selected.client_phone}</p><p>{selected.service_name} con {selected.barber_name}</p><p>{selected.appointment_date} a las {selected.appointment_time}</p><StatusBadge status={selected.status}/><p>{selected.notes}</p></Modal>}
       {/* Filters */}
-      <div className={styles.filters}>
-        <input
-          type="date" className={styles.filterInput}
-          value={filterDate} onChange={e => setFilterDate(e.target.value)}
-        />
-        <select className={styles.filterInput} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="">Todos los estados</option>
-          {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        {isAdmin && (
-          <select className={styles.filterInput} value={filterBarber} onChange={e => setFilterBarber(e.target.value)}>
-            <option value="">Todos los barberos</option>
-            {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
-        )}
-        {(filterDate || filterStatus || filterBarber) && (
-          <button className={styles.clearBtn} onClick={() => { setFilterDate(''); setFilterStatus(''); setFilterBarber('') }}>
-            ✕ Limpiar
-          </button>
-        )}
+      <div className={`${styles.filters} ${advancedFiltersOpen ? styles.filtersOpen : ''}`}>
+        <div className={styles.quickFilters} role="group" aria-label="Filtrar citas por fecha">
+          {([['today', 'Hoy'], ['upcoming', 'Próximas'], ['all', 'Todas']] as const).map(([value, label]) => <button key={value} type="button" className={`${styles.filterChip} ${timePreset === value ? styles.filterChipActive : ''}`} aria-pressed={timePreset === value} onClick={() => { setTimePreset(value); setFilterDate(value === 'today' ? today : '') }}>{label}</button>)}
+        </div>
+        <button type="button" className={styles.advancedToggle} aria-expanded={advancedFiltersOpen} onClick={() => setAdvancedFiltersOpen(value => !value)}><SlidersHorizontal size={17} aria-hidden="true" /><span>Filtros</span>{activeFilterCount > 0 && <span className={styles.filterCount}>{activeFilterCount}</span>}</button>
+        <div className={styles.advancedFilters}>
+          <label className={styles.mobileFilterLabel}><CalendarDays size={15} aria-hidden="true" /><span>Fecha</span><input
+            type="date" className={styles.filterInput}
+            value={filterDate} onChange={e => { setFilterDate(e.target.value); setTimePreset(e.target.value ? 'custom' : 'all') }}
+          /></label>
+          <label className={styles.mobileFilterLabel}><span>Estado</span><select className={styles.filterInput} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="">Todos los estados</option>
+            {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select></label>
+          {isAdmin && (
+            <label className={styles.mobileFilterLabel}><span>Barbero</span><select className={styles.filterInput} value={filterBarber} onChange={e => setFilterBarber(e.target.value)}>
+              <option value="">Todos los barberos</option>
+              {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select></label>
+          )}
+          {(filterDate || filterStatus || filterBarber) && (
+            <button className={styles.clearBtn} onClick={() => { setFilterDate(''); setFilterStatus(''); setFilterBarber(''); setTimePreset('all') }}>
+              <X size={15} aria-hidden="true" /> Limpiar filtros
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
       {loading ? (
         <div className={styles.loader}><div className="spinner" /></div>
-      ) : appointments.length === 0 ? (
+      ) : visibleAppointments.length === 0 ? (
         <div className={styles.empty}>No se encontraron citas.</div>
       ) : (
+        <>
+        <div className={styles.mobileCards}>
+          {visibleAppointments.map(a => (
+            <article className={styles.appointmentCard} key={a.id}>
+              <header className={styles.cardHeader}>
+                <div className={styles.cardTime}><Clock3 size={16} aria-hidden="true" /><strong>{formatTime(a.appointment_time)}</strong><span>{formatDate(a.appointment_date)}</span></div>
+                {(isAdmin || a.status === 'confirmed') ? <select className={styles.cardStatusSelect} aria-label={`Estado de la cita de ${a.client_name}`} value={a.status} onChange={e => handleStatusChange(a.id, e.target.value)}>{STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}</select> : <StatusBadge status={a.status} />}
+              </header>
+              <div className={styles.cardDetails}>
+                <div className={styles.cardMainInfo}><h2>{a.service_name}</h2><strong>{a.client_name}</strong><span>{a.client_phone}</span>{isAdmin && <span>Barbero · {a.barber_name}</span>}</div>
+                <strong className={styles.cardPrice}>{formatPrice(a.service_price!)}</strong>
+              </div>
+              <footer className={styles.cardActions}>
+                <button className={styles.detailAction} onClick={() => setSelected(a)}><Eye size={16} aria-hidden="true" />Detalles</button>
+                {isAdmin && <button className={styles.cardIconAction} onClick={() => openEdit(a)} aria-label={`Editar cita de ${a.client_name}`}><Pencil size={16} aria-hidden="true" /></button>}
+                {isAdmin && a.status !== 'cancelled' && <button className={`${styles.cardIconAction} ${styles.cancelAction}`} onClick={() => handleCancel(a.id)} aria-label={`Cancelar cita de ${a.client_name}`}><X size={16} aria-hidden="true" /></button>}
+              </footer>
+            </article>
+          ))}
+        </div>
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
@@ -213,7 +244,7 @@ export default function AdminAppointments() {
               </tr>
             </thead>
             <tbody>
-              {appointments.map(a => (
+              {visibleAppointments.map(a => (
                 <tr key={a.id}>
                   <td>
                     <span className={styles.clientName}>{a.client_name}</span>
@@ -257,6 +288,7 @@ export default function AdminAppointments() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Modal — only admin can open it via table; barbers can create new */}
