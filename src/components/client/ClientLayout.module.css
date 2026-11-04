@@ -5,6 +5,7 @@
 .root::before { left:-650px; top:90px; box-shadow:0 25px 0 -24px #ed29394a; }
 .root::after { right:-540px; bottom:15px; box-shadow:0 32px 0 -31px #f2394c88,0 70px 0 -69px #ed293926; }
 .header { position:relative; z-index:20; border-bottom:1px solid #ffffff16; background:#0d1114b8; backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); box-shadow:0 1px 0 #ffffff03; }
+@media(min-width:761px) { .bookingRoot .header { border-bottom-color:#ffffff0d; background:linear-gradient(180deg,#0d11144a 0%,#0d111426 100%); backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; } }
 .headerInner { max-width:1320px; margin:0 auto; padding:0 32px; min-height:109px; display:flex; align-items:center; justify-content:space-between; gap:34px; }
 .logo { display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .logoImage { display:block; width:150px; height:91px; object-fit:contain; }
