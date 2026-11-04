@@ -8,6 +8,20 @@ export const admin = () =>
   );
 export const origin = () =>
   Deno.env.get("APP_ORIGIN") || "http://localhost:5173";
+const allowedOrigin = (value: string | null) => {
+  if (!value) return false;
+  if (value === origin()) return true;
+  // Vercel creates a new URL for each preview. Accept previews owned by this
+  // Vercel project and team without allowing arbitrary vercel.app sites.
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" &&
+      /^barberia-d2vs-[a-z0-9-]+-brandonaguicedes-projects\.vercel\.app$/i
+        .test(url.hostname);
+  } catch {
+    return false;
+  }
+};
 export const headers = () => ({
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": origin(),
@@ -18,11 +32,32 @@ export const headers = () => ({
   "Referrer-Policy": "no-referrer",
   "Vary": "Origin",
 });
+export function serve(handler: (request: Request) => Response | Promise<Response>) {
+  Deno.serve(async (request) => {
+    const response = await handler(request);
+    const requestOrigin = request.headers.get("origin");
+    if (!allowedOrigin(requestOrigin)) return response;
+
+    // Return the approved preview's exact origin on both OPTIONS and the
+    // eventual response so browsers accept the complete request lifecycle.
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.set("Access-Control-Allow-Origin", requestOrigin);
+    responseHeaders.set(
+      "Vary",
+      [responseHeaders.get("Vary"), "Origin"].filter(Boolean).join(", "),
+    );
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
+    });
+  });
+}
 export function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: headers() });
 }
 export function preflight(req: Request) {
-  if (req.headers.get("origin") && req.headers.get("origin") !== origin()) {
+  if (req.headers.get("origin") && !allowedOrigin(req.headers.get("origin"))) {
     return json({ message: "Origen no permitido" }, 403);
   }
   if (req.method === "OPTIONS") {

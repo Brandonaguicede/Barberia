@@ -5,10 +5,11 @@ import {
   json,
   limit,
   preflight,
+  serve,
   token,
 } from "../_shared/http.ts";
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   const early = preflight(req);
   if (early) return early;
   try {
