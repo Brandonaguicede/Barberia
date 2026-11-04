@@ -64,7 +64,7 @@ function customerEmailHtml_(b) {
     ? emailButton_(b.customerUrl, "Ver o gestionar mi cita")
     : "";
   const manageNote = manageButton
-    ? '<p style="margin:11px 0 0;color:#a5a9b1;font-family:Arial,sans-serif;font-size:12px;line-height:1.6;text-align:center">Desde tu enlace podés consultar, cancelar o reprogramar tu cita según disponibilidad.</p>'
+    ? '<p class="tb-email-muted" style="margin:11px 0 0;color:#5f6368;font-family:Arial,sans-serif;font-size:12px;line-height:1.6;text-align:center">Desde tu enlace podés consultar, cancelar o reprogramar tu cita según disponibilidad.</p>'
     : "";
 
   return emailLayout_({
@@ -108,59 +108,85 @@ function barberEmailHtml_(b) {
 }
 
 function emailLayout_(content) {
-  return `<div style="margin:0;padding:6px;background:#050607;color:#f4f5f7;font-family:Arial,Helvetica,sans-serif">
+  return `<!doctype html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <style type="text/css">
+    .tb-email-bg { background-color:#f1f3f5 !important; color:#202124 !important; }
+    .tb-email-shell { background-color:#ffffff !important; border-color:#dadce0 !important; }
+    .tb-email-surface { background-color:#f7f8fa !important; }
+    .tb-email-text { color:#202124 !important; }
+    .tb-email-muted { color:#5f6368 !important; }
+    .tb-email-divider { background-color:#dadce0 !important; }
+    .tb-email-status { background-color:#e6f4ea !important; color:#137333 !important; }
+    @media (prefers-color-scheme: dark) {
+      .tb-email-bg { background-color:#050607 !important; color:#f4f5f7 !important; }
+      .tb-email-shell { background-color:#101216 !important; border-color:#24272d !important; }
+      .tb-email-surface { background-color:#1b1e23 !important; }
+      .tb-email-text { color:#f4f5f7 !important; }
+      .tb-email-muted { color:#b4b6bd !important; }
+      .tb-email-divider { background-color:#363940 !important; }
+      .tb-email-status { background-color:#073b26 !important; color:#12ce73 !important; }
+    }
+    </style>
+  </head>
+  <body class="tb-email-bg" style="margin:0;padding:6px;background:#f1f3f5;color:#202124;font-family:Arial,Helvetica,sans-serif">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse">
       <tr><td align="center" style="padding:0">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:760px;border-collapse:separate;border-spacing:0;background:#101216;border:1px solid #17191d;border-radius:16px;overflow:hidden">
+        <table role="presentation" class="tb-email-shell" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:760px;border-collapse:separate;border-spacing:0;background:#ffffff;border:1px solid #dadce0;border-radius:16px;overflow:hidden">
           <tr><td align="center" style="padding:28px 20px 25px">
             <div style="color:#f3344c;font-size:25px;line-height:1">✂</div>
-            <div style="margin-top:8px;color:#f7f7f8;font-size:19px;font-weight:800;line-height:1.2">TENORIO</div>
-            <div style="margin-top:5px;color:#c5c6ca;font-size:12px;font-weight:700;letter-spacing:4px">BARBER</div>
+            <div class="tb-email-text" style="margin-top:8px;color:#202124;font-size:19px;font-weight:800;line-height:1.2">TENORIO</div>
+            <div class="tb-email-muted" style="margin-top:5px;color:#5f6368;font-size:12px;font-weight:700;letter-spacing:4px">BARBER</div>
           </td></tr>
           <tr><td style="height:1px;background:#ef2944;font-size:0;line-height:0">&nbsp;</td></tr>
           <tr><td align="center" style="padding:28px 20px 20px">
             <div style="display:inline-block;width:19px;height:19px;border:2px solid #fa3b54;border-radius:50%;color:#fa3b54;font-size:15px;font-weight:700;line-height:19px;text-align:center">✓</div>
-            <h1 style="margin:13px 0 8px;color:#f5f5f6;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:750;line-height:1.35">${content.heading}</h1>
-            <p style="margin:0;color:#b4b6bd;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65">${content.intro}</p>
+            <h1 class="tb-email-text" style="margin:13px 0 8px;color:#202124;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:750;line-height:1.35">${content.heading}</h1>
+            <p class="tb-email-muted" style="margin:0;color:#5f6368;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65">${content.intro}</p>
           </td></tr>
           <tr><td style="padding:0 12px">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#1b1e23;border-radius:13px">
+            <table role="presentation" class="tb-email-surface" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#f7f8fa;border-radius:13px">
               <tr><td style="padding:16px 12px 9px">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse"><tr>
-                  <td style="color:#afb1b8;font-size:11px;line-height:1.5">${content.eyebrow}</td>
-                  <td align="right"><span style="display:inline-block;padding:4px 9px;border-radius:20px;background:#073b26;color:#12ce73;font-size:10px;font-weight:700;line-height:1.2">${content.status}</span></td>
+                  <td class="tb-email-muted" style="color:#5f6368;font-size:11px;line-height:1.5">${content.eyebrow}</td>
+                  <td align="right"><span class="tb-email-status" style="display:inline-block;padding:4px 9px;border-radius:20px;background:#e6f4ea;color:#137333;font-size:10px;font-weight:700;line-height:1.2">${content.status}</span></td>
                 </tr></table>
-                <h2 style="margin:15px 0 16px;color:#f5f5f6;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700;line-height:1.4">${content.service}</h2>
-                <div style="height:1px;background:#363940;font-size:0;line-height:0">&nbsp;</div>
+                <h2 class="tb-email-text" style="margin:15px 0 16px;color:#202124;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700;line-height:1.4">${content.service}</h2>
+                <div class="tb-email-divider" style="height:1px;background:#dadce0;font-size:0;line-height:0">&nbsp;</div>
               </td></tr>
               <tr><td style="padding:6px 12px 10px">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse">${content.rows}</table>
               </td></tr>
-              <tr><td style="padding:0 12px"><div style="height:1px;background:#363940;font-size:0;line-height:0">&nbsp;</div></td></tr>
+              <tr><td style="padding:0 12px"><div class="tb-email-divider" style="height:1px;background:#dadce0;font-size:0;line-height:0">&nbsp;</div></td></tr>
               <tr><td style="padding:15px 12px 16px">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse"><tr>
-                  <td style="color:#f1f1f3;font-size:14px;font-weight:700">Total</td>
-                  <td align="right" style="color:#f7f7f8;font-size:16px;font-weight:800">${content.total}</td>
+                  <td class="tb-email-text" style="color:#202124;font-size:14px;font-weight:700">Total</td>
+                  <td align="right" class="tb-email-text" style="color:#202124;font-size:16px;font-weight:800">${content.total}</td>
                 </tr></table>
               </td></tr>
             </table>
           </td></tr>
           ${content.button ? `<tr><td style="padding:12px 12px 0">${content.button}${content.note}</td></tr>` : ""}
           <tr><td style="padding:23px 12px 18px">
-            <div style="height:1px;background:#363940;font-size:0;line-height:0">&nbsp;</div>
-            <p style="margin:27px 0 4px;color:#f0f0f2;font-size:12px;font-weight:700;text-align:center">TENORIO BARBER</p>
-            <p style="margin:0;color:#a5a8b0;font-size:13px;line-height:1.5;text-align:center">Tu estilo empieza aquí · Costa Rica</p>
+            <div class="tb-email-divider" style="height:1px;background:#dadce0;font-size:0;line-height:0">&nbsp;</div>
+            <p class="tb-email-text" style="margin:27px 0 4px;color:#202124;font-size:12px;font-weight:700;text-align:center">TENORIO BARBER</p>
+            <p class="tb-email-muted" style="margin:0;color:#5f6368;font-size:13px;line-height:1.5;text-align:center">Tu estilo empieza aquí · Costa Rica</p>
           </td></tr>
         </table>
       </td></tr>
     </table>
-  </div>`;
+  </body>
+  </html>`;
 }
 
 function emailRow_(icon, label, value) {
   return `<tr>
-    <td style="padding:9px 0;color:#aeb0b8;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;white-space:nowrap"><span style="display:inline-block;width:22px;color:#f43b53;font-size:15px;font-weight:700">${icon}</span>${escapeHtml_(label)}</td>
-    <td align="right" style="padding:9px 0;color:#f2f2f4;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;line-height:1.45">${escapeHtml_(value || "Por confirmar")}</td>
+    <td class="tb-email-muted" style="padding:9px 0;color:#5f6368;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;white-space:nowrap"><span style="display:inline-block;width:22px;color:#f43b53;font-size:15px;font-weight:700">${icon}</span>${escapeHtml_(label)}</td>
+    <td align="right" class="tb-email-text" style="padding:9px 0;color:#202124;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;line-height:1.45">${escapeHtml_(value || "Por confirmar")}</td>
   </tr>`;
 }
 
