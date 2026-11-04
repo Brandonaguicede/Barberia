@@ -100,6 +100,16 @@
 .formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 @media (max-width: 560px) { .formGrid { grid-template-columns: 1fr; } }
 .fullCol { grid-column: 1 / -1; }
+.durationPresets { border:0; min-width:0; padding:0; }
+.durationPresets legend { color:var(--text-muted); font-size:11px; font-weight:650; margin-bottom:9px; }
+.durationPresets>div { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.durationPresets button { display:flex; align-items:flex-start; justify-content:space-between; flex-direction:column; gap:6px; min-height:58px; padding:10px 11px; border:1px solid var(--border); border-radius:9px; background:var(--bg-elevated); color:var(--text-muted); text-align:left; cursor:pointer; transition:background-color .15s var(--ease-out),border-color .15s var(--ease-out),color .15s var(--ease-out); }
+.durationPresets button strong { font-size:11px; font-weight:650; }
+.durationPresets button span { color:var(--text-dim); font-size:10px; }
+.durationPresets button:hover,.durationPresets .durationPresetActive { border-color:var(--accent-dim); background:color-mix(in srgb,var(--accent) 11%,var(--bg-elevated)); color:var(--text); }
+.durationPresets .durationPresetActive span { color:var(--accent-light); }
+.durationPresets p { margin-top:8px; color:var(--text-dim); font-size:10px; line-height:1.7; }
+@media(max-width:480px) { .durationPresets>div { grid-template-columns:1fr; } .durationPresets button { min-height:0; flex-direction:row; align-items:center; } }
 
 .modalActions {
   display: flex;

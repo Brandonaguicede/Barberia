@@ -53,6 +53,11 @@
 .days .daySelected { border-color:#ec516680; background:#dd244019; color:#ffd7de; }
 .days input { width:14px; height:14px; }
 .timeFields { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.fullDayToggle { display:flex; align-items:flex-start; gap:11px; padding:13px 14px; border:1px solid #ffffff20; border-radius:10px; background:#ffffff04; cursor:pointer; }
+.fullDayToggle input { flex-shrink:0; width:17px; height:17px; margin-top:2px; accent-color:var(--accent); }
+.fullDayToggle strong,.fullDayToggle small { display:block; }
+.fullDayToggle strong { color:var(--text); font-size:12px; font-weight:700; }
+.fullDayToggle small { margin-top:4px; color:var(--text-dim); font-size:10px; line-height:1.6; }
 .formActions { display:flex; flex-wrap:wrap; align-items:center; gap:11px; }
 .rules { border:1px solid #ffffff1a; border-radius:15px; padding:20px 25px; background:#ffffff02; }
 .rules summary { display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text-muted); font-size:13px; font-weight:700; }

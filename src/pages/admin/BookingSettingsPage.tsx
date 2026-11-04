@@ -28,6 +28,10 @@ const RULES = [
 ] as const
 const localDateTime = (value?: string) => value ? new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Costa_Rica', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value)).replace(' ', 'T') : ''
 const prettyDate = (value?: string) => value ? new Date(value).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica', dateStyle: 'medium', timeStyle: 'short' }) : ''
+const addDateDays = (date: string, days: number) => {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
 
 export default function BookingSettingsPage() {
   const { isAdmin, user } = useAuth()
@@ -49,6 +53,8 @@ export default function BookingSettingsPage() {
   const [selectedDays, setSelectedDays] = useState<number[]>([])
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
+  const [fullDayBlock, setFullDayBlock] = useState(false)
+  const [blockDate, setBlockDate] = useState('')
   const [reason, setReason] = useState('')
   const [accountMode, setAccountMode] = useState<'existing' | 'new'>('existing')
   const [account, setAccount] = useState('')
@@ -87,7 +93,7 @@ export default function BookingSettingsPage() {
 
   useEffect(() => { setDetails(EMPTY_DETAILS) }, [barber])
 
-  const resetDraft = () => { setEditing(null); setSelectedDays([]); setStart(''); setEnd(''); setReason('') }
+  const resetDraft = () => { setEditing(null); setSelectedDays([]); setStart(''); setEnd(''); setReason(''); setFullDayBlock(false); setBlockDate('') }
   useEffect(() => { resetDraft(); setAccount(''); setEmail(''); setPassword(''); setError('') }, [barber, mode])
   const selectedBarber = barbers.find(b => b.id === barber)
   const staff = isAdmin ? users.find(u => u.id === selectedBarber?.user_id) : user
@@ -121,7 +127,8 @@ export default function BookingSettingsPage() {
   })
   const saveAvailability = () => run(async () => {
     if (!allowed || !barber) throw new Error('No tienes permiso para editar esta agenda.')
-    if (!start || !end || start >= end) throw new Error('La hora o fecha de fin debe ser posterior al inicio.')
+    if (mode === 'barber_time_off' && fullDayBlock && !blockDate) throw new Error('Selecciona el día que quieres bloquear.')
+    if ((mode !== 'barber_time_off' || !fullDayBlock) && (!start || !end || start >= end)) throw new Error('La hora o fecha de fin debe ser posterior al inicio.')
     if (mode !== 'barber_time_off' && selectedDays.length === 0) throw new Error('Selecciona al menos un día de la semana.')
     const duplicateDays = mode === 'barber_schedules' && !editing
       ? selectedDays.filter(day => rows.some(row => row.weekday === day && row.opens_at?.slice(0, 5) === start && row.closes_at?.slice(0, 5) === end))
@@ -131,7 +138,13 @@ export default function BookingSettingsPage() {
       : selectedDays
     if (mode !== 'barber_time_off' && rows.some(row => row.id !== editing && daysToSave.includes(row.weekday!) && start < (row.closes_at || row.ends_at || '').slice(0, 5) && end > (row.opens_at || row.starts_at || '').slice(0, 5))) throw new Error('El intervalo coincide con otra regla de esos días. Ajusta la selección o edita el horario existente.')
     if (mode === 'barber_schedules' && !editing && daysToSave.length === 0) throw new Error('Ese horario ya está guardado para todos los días seleccionados. Elige días nuevos o edita el horario existente.')
-    const payloads: Record<string, string | number | null>[] = mode === 'barber_time_off' ? [{ barber_id: barber, starts_at: new Date(`${start}:00-06:00`).toISOString(), ends_at: new Date(`${end}:00-06:00`).toISOString(), reason: reason.trim() || null }]
+    let startsAt = start
+    let endsAt = end
+    if (mode === 'barber_time_off' && fullDayBlock) {
+      startsAt = `${blockDate}T00:00`
+      endsAt = `${addDateDays(blockDate, 1)}T00:00`
+    }
+    const payloads: Record<string, string | number | null>[] = mode === 'barber_time_off' ? [{ barber_id: barber, starts_at: new Date(`${startsAt}:00-06:00`).toISOString(), ends_at: new Date(`${endsAt}:00-06:00`).toISOString(), reason: reason.trim() || null }]
       : (editing ? selectedDays.slice(0, 1) : daysToSave).map(weekday => ({ barber_id: barber, weekday, ...(mode === 'barber_schedules' ? { opens_at: start, closes_at: end } : { starts_at: start, ends_at: end }) }))
     if (editing) {
       const result = await supabase.from(mode).update(payloads[0]).eq('id', editing).eq('barber_id', barber).select('id').single()
@@ -145,8 +158,12 @@ export default function BookingSettingsPage() {
   })
   const editRow = (row: Availability) => {
     setEditing(row.id); setSelectedDays(row.weekday === undefined ? [] : [row.weekday]); setReason(row.reason || '')
-    setStart(mode === 'barber_time_off' ? localDateTime(row.starts_at) : (row.opens_at || row.starts_at || '').slice(0, 5))
-    setEnd(mode === 'barber_time_off' ? localDateTime(row.ends_at) : (row.closes_at || row.ends_at || '').slice(0, 5))
+    const localStart = mode === 'barber_time_off' ? localDateTime(row.starts_at) : ''
+    const localEnd = mode === 'barber_time_off' ? localDateTime(row.ends_at) : ''
+    const isFullDay = Boolean(localStart.endsWith('T00:00') && localEnd.endsWith('T00:00') && localEnd.slice(0, 10) === addDateDays(localStart.slice(0, 10), 1))
+    setFullDayBlock(isFullDay); setBlockDate(isFullDay ? localStart.slice(0, 10) : '')
+    setStart(mode === 'barber_time_off' ? localStart : (row.opens_at || row.starts_at || '').slice(0, 5))
+    setEnd(mode === 'barber_time_off' ? localEnd : (row.closes_at || row.ends_at || '').slice(0, 5))
     requestAnimationFrame(() => document.getElementById('availability-editor')?.scrollIntoView({ block: 'center', behavior: 'instant' }))
   }
   const removeRow = (row: Availability) => {
@@ -197,7 +214,8 @@ export default function BookingSettingsPage() {
         {!loadingDetails && rows.length === 0 && <p className={styles.empty}>{mode === 'barber_schedules' ? 'Todavía no hay horario semanal. Agrégalo abajo para que se generen horas disponibles.' : mode === 'barber_breaks' ? 'No hay descansos configurados.' : 'No hay vacaciones ni bloqueos configurados.'}</p>}
         {!allowed ? <p className={styles.hint}>La administración debe habilitar la edición de tu disponibilidad.</p> : <form id="availability-editor" className={styles.editor} onSubmit={e => { e.preventDefault(); void saveAvailability() }}><h3>{editing ? 'Editar regla' : mode === 'barber_schedules' ? 'Agregar horario de trabajo' : mode === 'barber_breaks' ? 'Agregar descanso' : 'Agregar vacaciones o bloqueo'}</h3><fieldset disabled={disabled} className={styles.editorFields}>
           {mode !== 'barber_time_off' && <fieldset className={styles.days}><legend>{editing ? 'Día' : 'Días de la semana'}</legend><div>{[1, 2, 3, 4, 5, 6, 0].map(day => <label key={day} className={selectedDays.includes(day) ? styles.daySelected : ''}><input type={editing ? 'radio' : 'checkbox'} name="availability-days" checked={selectedDays.includes(day)} onChange={() => setSelectedDays(current => editing ? [day] : current.includes(day) ? current.filter(d => d !== day) : [...current, day])} />{DAYS[day]}</label>)}</div>{!editing && <button type="button" className={styles.textButton} onClick={() => setSelectedDays([1, 2, 3, 4, 5])}>Seleccionar lunes a viernes</button>}</fieldset>}{mode === 'barber_schedules' && !editing && <p className={styles.hint}>Si un día ya tiene exactamente ese horario, se conserva y se guardan los demás.</p>}
-          <div className={styles.timeFields}><FormField label={mode === 'barber_time_off' ? 'Fecha y hora de inicio' : 'Hora de inicio'} required><Input required type={mode === 'barber_time_off' ? 'datetime-local' : 'time'} value={start} onChange={e => setStart(e.target.value)} /></FormField><FormField label={mode === 'barber_time_off' ? 'Fecha y hora de fin' : 'Hora de fin'} required><Input required type={mode === 'barber_time_off' ? 'datetime-local' : 'time'} value={end} onChange={e => setEnd(e.target.value)} /></FormField></div>
+          {mode === 'barber_time_off' && <label className={styles.fullDayToggle}><input type="checkbox" checked={fullDayBlock} onChange={e => { const checked = e.target.checked; setFullDayBlock(checked); if (checked) { const dateFromStart = start.slice(0, 10); setBlockDate(dateFromStart || new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Costa_Rica' }).format(new Date())) } }} /><span><strong>Bloquear todo el día</strong><small>El barbero no aparecerá disponible en ninguna hora de esa fecha.</small></span></label>}
+          {mode === 'barber_time_off' && fullDayBlock ? <FormField label="Día que quieres bloquear" required><Input required type="date" value={blockDate} onChange={e => setBlockDate(e.target.value)} /></FormField> : <div className={styles.timeFields}><FormField label={mode === 'barber_time_off' ? 'Fecha y hora de inicio' : 'Hora de inicio'} required><Input required type={mode === 'barber_time_off' ? 'datetime-local' : 'time'} value={start} onChange={e => setStart(e.target.value)} /></FormField><FormField label={mode === 'barber_time_off' ? 'Fecha y hora de fin' : 'Hora de fin'} required><Input required type={mode === 'barber_time_off' ? 'datetime-local' : 'time'} value={end} onChange={e => setEnd(e.target.value)} /></FormField></div>}
           {mode === 'barber_time_off' && <FormField label="Motivo (opcional)"><Input maxLength={500} value={reason} onChange={e => setReason(e.target.value)} placeholder="Ej: vacaciones" /></FormField>}
           <div className={styles.formActions}><button className={styles.primary} disabled={disabled}>{editing ? <Check size={17} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}{busy ? 'Guardando…' : editing ? 'Guardar cambios' : mode === 'barber_schedules' ? 'Guardar horario' : mode === 'barber_breaks' ? 'Guardar descanso' : 'Guardar bloqueo'}</button>{editing && <button type="button" className={styles.secondary} disabled={disabled} onClick={resetDraft}>Cancelar edición</button>}</div>
         </fieldset></form>}

@@ -15,6 +15,11 @@ const CATEGORIES = [
   { value: 'color', label: '🎨 Color' },
   { value: 'general', label: '◎ General' },
 ]
+const DURATION_PRESETS = [
+  { label: 'Corte sencillo', minutes: 30 },
+  { label: 'Corte con navaja', minutes: 45 },
+  { label: 'Corte + barba', minutes: 60 },
+]
 
 interface ServiceForm {
   name: string; description: string; duration: string
@@ -177,6 +182,13 @@ export default function AdminServices() {
             <FormField label="Duración (minutos)" required>
               <Input type="number" min="5" step="5" placeholder="30" value={form.duration} onChange={set('duration')} />
             </FormField>
+            <div className={styles.fullCol}>
+              <fieldset className={styles.durationPresets} disabled={saving}>
+                <legend>Duración rápida</legend>
+                <div>{DURATION_PRESETS.map(preset => <button key={preset.minutes} type="button" aria-pressed={form.duration === String(preset.minutes)} className={form.duration === String(preset.minutes) ? styles.durationPresetActive : ''} onClick={() => setForm(current => ({ ...current, duration: String(preset.minutes) }))}><strong>{preset.label}</strong><span>{preset.minutes} min</span></button>)}</div>
+                <p>La agenda usa esta duración para calcular cuánto tiempo ocupa cada cita y qué horas quedan disponibles.</p>
+              </fieldset>
+            </div>
             <FormField label="Precio (CRC)" required>
               <Input type="number" min="0" step="500" placeholder="8000" value={form.price} onChange={set('price')} />
             </FormField>
