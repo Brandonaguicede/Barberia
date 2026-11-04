@@ -16,7 +16,7 @@ serve(async (req) => {
     await limit(req, "booking", 100);
     const input = await body(req), db = admin(), action = input.action;
     if (action === "catalog") {
-      const [b, s, links, settings] = await Promise.all([
+      const [b, s, links, settings, schedules] = await Promise.all([
         db.from("barbers").select("id,name,specialty,active").eq(
           "active",
           true,
@@ -29,14 +29,16 @@ serve(async (req) => {
           "id",
           true,
         ).single(),
+        db.from("barber_schedules").select("barber_id,weekday"),
       ]);
-      if (b.error || s.error || links.error || settings.error) {
+      if (b.error || s.error || links.error || settings.error || schedules.error) {
         throw new Error("Catálogo no disponible");
       }
       return json({
         barbers: b.data,
         services: s.data,
         barber_services: links.data,
+        working_weekdays: schedules.data,
         settings: settings.data,
       });
     }

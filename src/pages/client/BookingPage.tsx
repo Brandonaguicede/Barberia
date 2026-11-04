@@ -42,6 +42,7 @@ export default function BookingPage() {
   const [catalogSyncError, setCatalogSyncError] = useState('')
   const [catalogNotice, setCatalogNotice] = useState('')
   const [links, setLinks] = useState<{barber_id:string;service_id:string}[]>([])
+  const [workingWeekdays, setWorkingWeekdays] = useState<{barber_id:string;weekday:number}[] | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<FormData>({
     barber_id: '', service_id: '', appointment_date: '',
@@ -70,7 +71,7 @@ export default function BookingPage() {
         const previous = catalogRef.current
         const changes = reconcileCatalog(previous, c, formRef.current, localDate())
         catalogRef.current = c
-        setBarbers(c.barbers); setServices(c.services); setLinks(c.barber_services); setHorizonDays(c.settings.horizon_days)
+        setBarbers(c.barbers); setServices(c.services); setLinks(c.barber_services); setHorizonDays(c.settings.horizon_days); setWorkingWeekdays(c.working_weekdays ?? null)
         setForm(current => ({ ...current, ...reconcileCatalog(previous, c, current, localDate()).selection }))
         setCatalogSyncError('')
         if (previous) setSlotAttempt(n => n + 1)
@@ -132,6 +133,14 @@ export default function BookingPage() {
 
   const eligibleServices = services.filter(s => links.some(l => l.service_id === s.id && barbers.some(b => b.id === l.barber_id)))
   const eligibleBarbers = barbers.filter(b => links.some(l => l.barber_id === b.id && (!form.service_id || l.service_id === form.service_id)))
+  const relevantBarbers = form.barber_id ? eligibleBarbers.filter(b => b.id === form.barber_id) : eligibleBarbers
+  const barberWorkdays = workingWeekdays === null ? null : Array.from(new Set(workingWeekdays.filter(row => relevantBarbers.some(b => b.id === row.barber_id)).map(row => Number(row.weekday))))
+  const workdaysKey = barberWorkdays === null ? 'unknown' : barberWorkdays.join(',')
+  useEffect(() => {
+    if (!form.appointment_date || barberWorkdays === null) return
+    const weekday = new Date(`${form.appointment_date}T12:00:00Z`).getUTCDay()
+    if (!barberWorkdays.includes(weekday)) setForm(current => ({ ...current, appointment_date: '', appointment_time: '' }))
+  }, [workdaysKey, form.appointment_date])
   const selectService = (id: string) => setForm(current => {
     const matching = barbers.filter(b => links.some(l => l.barber_id === b.id && l.service_id === id))
     return { ...current, service_id: id, barber_id: matching.some(b => b.id === current.barber_id) ? current.barber_id : matching.length === 1 ? matching[0].id : '', appointment_time: '' }
@@ -262,7 +271,7 @@ export default function BookingPage() {
           <div className={styles.stepContent}>
             <div className={styles.bookingContext}><span className={styles.contextIcon}><Scissors size={20} aria-hidden="true" /></span><div><strong>{selectedService?.name}</strong><span>Con {selectedBarber?.name.trim()} · {selectedService?.duration} min</span></div><button type="button" onClick={() => changeStep(1)}>Cambiar</button></div>
             <div className={styles.dateTimeLayout}>
-            <BookingCalendar value={form.appointment_date} minDate={today} maxDate={maxDate} onChange={selectDate} />
+            <BookingCalendar value={form.appointment_date} minDate={today} maxDate={maxDate} workingWeekdays={barberWorkdays} onChange={selectDate} />
             {form.appointment_date && (
               <div className={`${styles.section} ${styles.timesSection}`}>
                 <div className={styles.timesHeading}><p className={styles.sectionLabel}><Clock3 size={20} aria-hidden="true" />Elige tu hora</p>{!loadingSlots && !slotsError && slots.length > 0 && <span>{slots.length} {slots.length === 1 ? 'hora disponible' : 'horas disponibles'}</span>}</div>

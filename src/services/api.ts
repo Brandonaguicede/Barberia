@@ -61,6 +61,7 @@ export interface Catalog {
   barbers: Barber[];
   services: Service[];
   barber_services: { barber_id: string; service_id: string }[];
+  working_weekdays?: { barber_id: string; weekday: number }[];
   settings: { shop_name: string; horizon_days: number };
 }
 export const catalogApi = {
