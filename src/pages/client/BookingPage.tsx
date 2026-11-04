@@ -209,7 +209,7 @@ export default function BookingPage() {
 
   const steps = ['Servicio', 'Horario', 'Datos', 'Confirmar']
   const stepIcons = [Scissors, CalendarDays, UserRound, Check]
-  const stepDescriptions = ['Selecciona el servicio que deseas y el profesional.', 'Encuentra un espacio que se ajuste a tu agenda.', 'Indica un correo válido para recibir el aviso de tu cita.', 'Revisa los detalles. Ya casi está todo listo.']
+  const stepDescriptions = ['Seleccioná el servicio que deseás y el profesional.', 'Encuentra un espacio que se ajuste a tu agenda.', 'Indica un correo válido para recibir el aviso de tu cita.', 'Revisa los detalles. Ya casi está todo listo.']
   const changeStep = (next: Step) => {
     if (next === 2) {
       const isMobile = window.matchMedia('(max-width: 760px)').matches
@@ -228,8 +228,9 @@ export default function BookingPage() {
   return (
     <div className={`${styles.page} ${step > 1 ? styles.inProgress : ''} ${step === 2 ? styles.schedulePage : ''}`}>
       <section className={styles.hero} aria-labelledby="booking-title">
-        <h1 id="booking-title" className={styles.heroTitle}>Reserva tu <span>cita.</span></h1>
-        <p className={styles.heroSub}>Selecciona el servicio, barbero, fecha y horario que mejor se ajuste a tu agenda.</p>
+        <img className={styles.barberPole} src="/images/barber-pole.svg" alt="" aria-hidden="true" />
+        <h1 id="booking-title" className={styles.heroTitle}>Elegí tu <span>Estilo.</span></h1>
+        <p className={styles.heroSub}>Reservá tu próximo corte con nosotros.</p>
         <div className={styles.benefits} aria-label="Cómo reservar">
           <div><span className={styles.benefitIcon}><CalendarDays aria-hidden="true" /></span><p>Rápido<br />y sencillo</p></div>
           <div><span className={styles.benefitIcon}><Scissors aria-hidden="true" /></span><p>Tu barbero,<br />tu estilo</p></div>
@@ -238,7 +239,7 @@ export default function BookingPage() {
         <p className={styles.heroNote}>Un buen corte comienza con un espacio para ti.</p>
       </section>
 
-      <section id="reservar" className={styles.bookingPanel} aria-label="Reserva tu cita">
+      <section id="reservar" className={styles.bookingPanel} aria-label="Reservá tu cita">
       <ol className={styles.stepper} aria-label="Pasos de la reserva">
         {steps.map((label, i) => {
           const n = (i + 1) as Step
@@ -257,7 +258,7 @@ export default function BookingPage() {
       {catalogSyncError && <div className={styles.catalogNotice} role="alert"><p>{catalogSyncError}</p><button type="button" onClick={() => setCatalogAttempt(n => n + 1)} disabled={refreshingCatalog}>Actualizar servicios</button></div>}
 
       <div className={styles.card}>
-        <h2 className={styles.stepTitle} id="booking-step-title" tabIndex={-1}>{step}. {['Elige servicio y barbero', 'Selecciona fecha y hora', 'Datos de contacto', 'Confirma tu cita'][step - 1]}</h2>
+        <h2 className={styles.stepTitle} id="booking-step-title" tabIndex={-1}>{step}. {['Elegí el servicio y barbero', 'Selecciona fecha y hora', 'Datos de contacto', 'Confirma tu cita'][step - 1]}</h2>
         <p className={styles.stepDescription}>{stepDescriptions[step - 1]}</p>
         {step === 1 && (
           <div className={styles.stepContent}>
