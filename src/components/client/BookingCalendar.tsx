@@ -43,7 +43,7 @@ export default function BookingCalendar({ value, minDate, maxDate, onChange }: P
     requestAnimationFrame(() => document.getElementById(target)?.focus({ preventScroll: true }))
   }
   return <div className={styles.wrapper}>
-    <div className={styles.shortcuts} aria-label="Fechas rápidas">{quickDays.map(day => <button type="button" key={day.date} aria-pressed={value === day.date} className={value === day.date ? styles.quickSelected : ''} onClick={() => onChange(day.date)}>{day.label}<span>{new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${day.date}T12:00:00Z`))}</span></button>)}</div>
+    <div className={styles.shortcuts} aria-label="Fechas rápidas">{quickDays.map(day => <button type="button" key={day.date} aria-pressed={value === day.date} className={value === day.date ? styles.quickSelected : ''} onClick={() => { setFocused(day.date); setMonth(calendarMonth(day.date)); onChange(day.date) }}>{day.label}<span>{new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${day.date}T12:00:00Z`))}</span></button>)}</div>
     <div className={styles.calendar}>
       <div className={styles.monthNav}><div><p>ELIGE UNA FECHA</p><h3 id={`${id}-month`} aria-live="polite" aria-label={calendarMonthLabel(month)}>{monthName} <span>{month.slice(0, 4)}</span></h3></div><div className={styles.monthButtons}><button type="button" aria-label="Mes anterior" disabled={month <= firstMonth} onClick={() => changeMonth(-1)}><ChevronLeft size={19} aria-hidden="true" /></button><button type="button" aria-label="Mes siguiente" disabled={month >= lastMonth} onClick={() => changeMonth(1)}><ChevronRight size={19} aria-hidden="true" /></button></div></div>
       <div role="grid" aria-label="Fecha de la cita" aria-describedby={`${id}-month`} className={styles.grid}>
@@ -54,6 +54,7 @@ export default function BookingCalendar({ value, minDate, maxDate, onChange }: P
         })}</div>)}
       </div>
       <div className={styles.legend}><span><i />Hoy</span><span><i />Día seleccionado</span></div>
+      <p className={styles.rangeNote}>Puedes elegir fechas hasta el <time dateTime={maxDate}>{new Intl.DateTimeFormat('es-CR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${maxDate}T12:00:00Z`))}</time></p>
     </div>
     <p className={styles.dateSummary} aria-live="polite">{value && <CalendarDays size={17} aria-hidden="true" />}<span>{value ? calendarDateLabel(value) : 'Selecciona un día para ver las horas disponibles.'}</span></p>
   </div>
