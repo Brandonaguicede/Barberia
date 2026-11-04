@@ -17,48 +17,24 @@ function doPost(e) {
       return json_({ ok: false, error: "invalid_booking" });
     }
 
-    const details = [
-      ["Servicio", `${safeText_(b.serviceName)} (${Number(b.serviceDuration) || 0} min)`],
-      ["Barbero", safeText_(b.barberName)],
-      ["Fecha", formatDate_(b.date)],
-      ["Hora", safeText_(b.time)],
-      ["Precio", formatPrice_(b.servicePrice)],
-    ];
-
     let sent = 0;
     const customerEmail = validEmail_(b.customerEmail);
     if (customerEmail) {
-      const customerRows = details.map(([label, value]) => row_(label, value)).join("");
-      const manageButton = safeUrl_(b.customerUrl)
-        ? `<p style="margin:26px 0"><a href="${escapeHtml_(b.customerUrl)}" style="background:#e31d35;color:#fff;padding:13px 20px;border-radius:8px;text-decoration:none;font-weight:700">Ver o gestionar mi cita</a></p>`
-        : "";
-      sendEmail_(customerEmail, `Cita confirmada · ${safeText_(b.shopName || "Tenorio Barber")}`, emailHtml_(
-        `¡Hola, ${safeText_(b.customerName)}!`,
-        "Tu cita está confirmada. Guarda este correo para consultar los detalles.",
-        customerRows,
-        `${manageButton}<p style="color:#9298a3;font-size:12px">Si no solicitaste esta cita, puedes ignorar este mensaje.</p>`,
-        b.shopName,
-      ));
+      sendEmail_(
+        customerEmail,
+        `Cita confirmada · ${safeText_(b.shopName || "Tenorio Barber")}`,
+        customerEmailHtml_(b),
+      );
       sent++;
     }
 
     const barberEmail = validEmail_(b.barberEmail);
     if (barberEmail) {
-      const barberRows = [
-        ["Cliente", safeText_(b.customerName)],
-        ["Teléfono", safeText_(b.customerPhone)],
-        ...details,
-      ].map(([label, value]) => row_(label, value)).join("");
-      const staffButton = safeUrl_(b.staffUrl)
-        ? `<p style="margin:26px 0"><a href="${escapeHtml_(b.staffUrl)}" style="background:#e31d35;color:#fff;padding:13px 20px;border-radius:8px;text-decoration:none;font-weight:700">Abrir cita en el panel</a></p>`
-        : "";
-      sendEmail_(barberEmail, `Nueva cita · ${safeText_(b.customerName)}`, emailHtml_(
-        `Nueva cita para ${safeText_(b.barberName || "el equipo")}`,
-        "Se confirmó una nueva reserva.",
-        barberRows,
-        staffButton,
-        b.shopName,
-      ));
+      sendEmail_(
+        barberEmail,
+        `Nueva cita · ${safeText_(b.customerName)}`,
+        barberEmailHtml_(b),
+      );
       sent++;
     }
 
@@ -74,11 +50,131 @@ function authorizeEmailSending() {
   MailApp.getRemainingDailyQuota();
 }
 
+function customerEmailHtml_(b) {
+  const customer = escapeHtml_(safeText_(b.customerName));
+  const service = escapeHtml_(safeText_(b.serviceName));
+  const duration = `${Number(b.serviceDuration) || 0} minutos`;
+  const rows = [
+    emailRow_("▦", "Fecha", formatDate_(b.date)),
+    emailRow_("◷", "Hora", safeText_(b.time)),
+    emailRow_("♙", "Barbero", safeText_(b.barberName)),
+    emailRow_("◴", "Duración", duration),
+  ].join("");
+  const manageButton = safeUrl_(b.customerUrl)
+    ? emailButton_(b.customerUrl, "Ver o gestionar mi cita")
+    : "";
+  const manageNote = manageButton
+    ? '<p style="margin:11px 0 0;color:#a5a9b1;font-family:Arial,sans-serif;font-size:12px;line-height:1.6;text-align:center">Desde tu enlace podés consultar, cancelar o reprogramar tu cita según disponibilidad.</p>'
+    : "";
+
+  return emailLayout_({
+    eyebrow: "DETALLES DE TU RESERVA",
+    status: "Confirmada",
+    heading: "¡Tu cita está confirmada!",
+    intro: `¡Hola, ${customer}! Tu próximo corte ya está agendado. Te esperamos.`,
+    service,
+    rows,
+    total: formatPrice_(b.servicePrice),
+    button: manageButton,
+    note: manageNote,
+  });
+}
+
+function barberEmailHtml_(b) {
+  const barber = escapeHtml_(safeText_(b.barberName || "el equipo"));
+  const service = escapeHtml_(safeText_(b.serviceName));
+  const rows = [
+    emailRow_("♙", "Cliente", safeText_(b.customerName)),
+    emailRow_("☎", "Teléfono", safeText_(b.customerPhone)),
+    emailRow_("▦", "Fecha", formatDate_(b.date)),
+    emailRow_("◷", "Hora", safeText_(b.time)),
+    emailRow_("◴", "Duración", `${Number(b.serviceDuration) || 0} minutos`),
+  ].join("");
+  const staffButton = safeUrl_(b.staffUrl)
+    ? emailButton_(b.staffUrl, "Abrir cita en el panel")
+    : "";
+
+  return emailLayout_({
+    eyebrow: "DETALLES DE LA RESERVA",
+    status: "Nueva cita",
+    heading: "Nueva cita confirmada",
+    intro: `Hola, ${barber}. Tienes una nueva reserva en tu agenda.`,
+    service,
+    rows,
+    total: formatPrice_(b.servicePrice),
+    button: staffButton,
+    note: "",
+  });
+}
+
+function emailLayout_(content) {
+  return `<div style="margin:0;padding:6px;background:#050607;color:#f4f5f7;font-family:Arial,Helvetica,sans-serif">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse">
+      <tr><td align="center" style="padding:0">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:760px;border-collapse:separate;border-spacing:0;background:#101216;border:1px solid #17191d;border-radius:16px;overflow:hidden">
+          <tr><td align="center" style="padding:28px 20px 25px">
+            <div style="color:#f3344c;font-size:25px;line-height:1">✂</div>
+            <div style="margin-top:8px;color:#f7f7f8;font-size:19px;font-weight:800;line-height:1.2">TENORIO</div>
+            <div style="margin-top:5px;color:#c5c6ca;font-size:12px;font-weight:700;letter-spacing:4px">BARBER</div>
+          </td></tr>
+          <tr><td style="height:1px;background:#ef2944;font-size:0;line-height:0">&nbsp;</td></tr>
+          <tr><td align="center" style="padding:28px 20px 20px">
+            <div style="display:inline-block;width:19px;height:19px;border:2px solid #fa3b54;border-radius:50%;color:#fa3b54;font-size:15px;font-weight:700;line-height:19px;text-align:center">✓</div>
+            <h1 style="margin:13px 0 8px;color:#f5f5f6;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:750;line-height:1.35">${content.heading}</h1>
+            <p style="margin:0;color:#b4b6bd;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65">${content.intro}</p>
+          </td></tr>
+          <tr><td style="padding:0 12px">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#1b1e23;border-radius:13px">
+              <tr><td style="padding:16px 12px 9px">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse"><tr>
+                  <td style="color:#afb1b8;font-size:11px;line-height:1.5">${content.eyebrow}</td>
+                  <td align="right"><span style="display:inline-block;padding:4px 9px;border-radius:20px;background:#073b26;color:#12ce73;font-size:10px;font-weight:700;line-height:1.2">${content.status}</span></td>
+                </tr></table>
+                <h2 style="margin:15px 0 16px;color:#f5f5f6;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700;line-height:1.4">${content.service}</h2>
+                <div style="height:1px;background:#363940;font-size:0;line-height:0">&nbsp;</div>
+              </td></tr>
+              <tr><td style="padding:6px 12px 10px">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse">${content.rows}</table>
+              </td></tr>
+              <tr><td style="padding:0 12px"><div style="height:1px;background:#363940;font-size:0;line-height:0">&nbsp;</div></td></tr>
+              <tr><td style="padding:15px 12px 16px">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse"><tr>
+                  <td style="color:#f1f1f3;font-size:14px;font-weight:700">Total</td>
+                  <td align="right" style="color:#f7f7f8;font-size:16px;font-weight:800">${content.total}</td>
+                </tr></table>
+              </td></tr>
+            </table>
+          </td></tr>
+          ${content.button ? `<tr><td style="padding:12px 12px 0">${content.button}${content.note}</td></tr>` : ""}
+          <tr><td style="padding:23px 12px 18px">
+            <div style="height:1px;background:#363940;font-size:0;line-height:0">&nbsp;</div>
+            <p style="margin:27px 0 4px;color:#f0f0f2;font-size:12px;font-weight:700;text-align:center">TENORIO BARBER</p>
+            <p style="margin:0;color:#a5a8b0;font-size:13px;line-height:1.5;text-align:center">Tu estilo empieza aquí · Costa Rica</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>`;
+}
+
+function emailRow_(icon, label, value) {
+  return `<tr>
+    <td style="padding:9px 0;color:#aeb0b8;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.45;white-space:nowrap"><span style="display:inline-block;width:22px;color:#f43b53;font-size:15px;font-weight:700">${icon}</span>${escapeHtml_(label)}</td>
+    <td align="right" style="padding:9px 0;color:#f2f2f4;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;line-height:1.45">${escapeHtml_(value || "Por confirmar")}</td>
+  </tr>`;
+}
+
+function emailButton_(url, label) {
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0"><tr><td align="center" bgcolor="#e92742" style="padding:14px 16px;background:#e92742;border-radius:11px">
+    <a href="${escapeHtml_(url)}" style="display:block;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;line-height:1.4;text-align:center;text-decoration:none">${escapeHtml_(label)} &nbsp;→</a>
+  </td></tr></table>`;
+}
+
 function sendEmail_(to, subject, htmlBody) {
   const plainBody = htmlBody
     .replace(/<a\b[^>]*href=(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi, "$3: $2")
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|h1|td|tr|div)>/gi, "\n")
+    .replace(/<\/(p|h1|h2|td|tr|div)>/gi, "\n")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -98,22 +194,17 @@ function sendEmail_(to, subject, htmlBody) {
   });
 }
 
-function emailHtml_(heading, intro, rows, footer, shopName) {
-  return `<div style="margin:0;background:#0d1013;padding:32px 14px;font-family:Arial,sans-serif;color:#f4f5f7"><div style="max-width:560px;margin:auto;background:#171b20;border:1px solid #343a42;border-radius:16px;overflow:hidden"><div style="height:4px;background:#e31d35"></div><div style="padding:28px"><p style="margin:0 0 24px;color:#e31d35;font-size:12px;font-weight:700;letter-spacing:3px">${escapeHtml_(shopName || "TENORIO BARBER")}</p><h1 style="font-size:24px;margin:0 0 10px">${heading}</h1><p style="color:#b9bec7;line-height:1.6;margin:0 0 22px">${intro}</p><table style="width:100%;border-collapse:collapse">${rows}</table>${footer}<p style="color:#777f8b;font-size:12px;border-top:1px solid #343a42;padding-top:18px;margin-top:28px">Tenorio Barber · Costa Rica</p></div></div></div>`;
-}
-
-function row_(label, value) {
-  return `<tr><td style="padding:11px 0;color:#9298a3;border-bottom:1px solid #30353c">${escapeHtml_(label)}</td><td style="padding:11px 0;text-align:right;color:#f4f5f7;font-weight:600;border-bottom:1px solid #30353c">${escapeHtml_(value)}</td></tr>`;
-}
-
 function formatDate_(iso) {
   const match = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  return match ? `${match[3]}/${match[2]}/${match[1]}` : safeText_(iso);
+  if (!match) return escapeHtml_(safeText_(iso));
+  const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  return `${match[3]} ${months[Number(match[2]) - 1]} ${match[1]}`;
 }
 
 function formatPrice_(value) {
   const amount = Number(value);
-  return Number.isFinite(amount) ? `₡${amount.toLocaleString("es-CR")}` : "Por confirmar";
+  if (!Number.isFinite(amount)) return "Por confirmar";
+  return `₡${Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 }
 
 function validEmail_(value) {
