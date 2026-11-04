@@ -1,3 +1,4 @@
+import { chooseService } from './helpers/service-picker.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs/promises'
@@ -27,7 +28,7 @@ test('reserva y enlace privado en escritorio y móvil (API simulada)',async()=>{
  await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(data)})
  })
  await page.goto(base)
- await page.getByLabel('Servicio',{exact:true}).selectOption('service-1')
+ await chooseService(page, 'service-1')
  assert.equal(await page.getByRole('button',{name:/Cualquiera disponible/}).count(),0)
  assert.equal(await page.getByRole('button',{name:/Ángel/}).getAttribute('aria-pressed'),'true')
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false)

@@ -115,6 +115,8 @@ test('agenda editable desde el panel en escritorio y movil, sin datos reales', a
       await page.getByRole('alert').filter({ hasText: 'El intervalo coincide' }).waitFor()
       assert.equal(state.barber_schedules.length, 2)
       await page.getByLabel('Disponibilidad', { exact: true }).selectOption('barber_breaks')
+      // The mode change clears the previous invalid draft in a React effect.
+      await page.waitForFunction(() => document.querySelector('input[type="time"]')?.value === '')
       await page.getByLabel('Lunes', { exact: true }).check()
       await page.getByLabel('Hora de inicio').fill('12:00')
       await page.getByLabel('Hora de fin').fill('13:00')
@@ -156,8 +158,8 @@ test('agenda editable desde el panel en escritorio y movil, sin datos reales', a
       await page.getByText('Corte actualizado', { exact: true }).waitFor()
       await client.bringToFront()
       await client.getByText('Corte actualizado', { exact: true }).waitFor()
-      assert.equal(await client.getByLabel('Servicio', { exact: true }).inputValue(), 'service-1')
-      assert.match((await client.getByLabel('Servicio', { exact: true }).locator('option:checked').textContent()).replace(/\s/g, ''), /4500/)
+      assert.equal(await client.getByLabel('Servicio', { exact: true }).getAttribute('data-selected-service'), 'service-1')
+      assert.match((await client.getByLabel('Servicio', { exact: true }).textContent()).replace(/\s/g, ''), /4500/)
       assert.deepEqual(errors, [])
       await context.close()
     }

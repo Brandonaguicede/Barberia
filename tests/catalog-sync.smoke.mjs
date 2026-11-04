@@ -28,7 +28,7 @@ test('catalogo vivo: cambios entre pestanas, conservacion del formulario y revis
     catalog.services[0].name = 'Corte actualizado'; catalog.services[0].price = 5500
     await changed()
     await page.getByText('Corte actualizado', { exact: true }).waitFor()
-    assert.match((await page.getByLabel('Servicio', { exact: true }).locator('option:checked').textContent()).replace(/\s/g, ''), /5500/)
+    assert.match((await page.getByLabel('Servicio', { exact: true }).textContent()).replace(/\s/g, ''), /5500/)
     await page.getByRole('button', { name: 'Continuar', exact: true }).click()
     await page.getByRole('button', { name: /^Mañana/ }).click()
     await page.getByRole('button', { name: '9:00 am', exact: true }).click()
@@ -63,13 +63,13 @@ test('catalogo vivo: cambios entre pestanas, conservacion del formulario y revis
     catalog.services[0].active = false
     await changed()
     await page.getByRole('heading', { name: /1\. Elige servicio/ }).waitFor()
-    assert.equal(await page.getByLabel('Servicio', { exact: true }).inputValue(), 'barba')
+    assert.equal(await page.getByLabel('Servicio', { exact: true }).getAttribute('data-selected-service'), 'barba')
     revision++; catalog.services[1].name = 'Servicio remoto'
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))
     await page.getByText('Servicio remoto', { exact: true }).waitFor()
     failCatalog = true; await changed()
     await page.getByRole('alert').filter({ hasText: 'No pudimos actualizar los servicios' }).waitFor()
-    assert.equal(await page.getByLabel('Servicio', { exact: true }).inputValue(), 'barba')
+    assert.equal(await page.getByLabel('Servicio', { exact: true }).getAttribute('data-selected-service'), 'barba')
     failCatalog = false
     await page.getByRole('button', { name: 'Actualizar servicios', exact: true }).click()
     await page.getByRole('alert').filter({ hasText: 'No pudimos actualizar los servicios' }).waitFor({ state: 'hidden' })

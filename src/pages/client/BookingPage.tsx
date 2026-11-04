@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import toast from '../../services/toast'
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Clock3, Scissors, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3, Scissors, ShieldCheck, UserRound } from 'lucide-react'
 import { localDate } from '../../utils/booking'
 import { addCalendarDays } from '../../utils/calendar'
 import BookingCalendar from '../../components/client/BookingCalendar'
+import ServicePicker from '../../components/client/ServicePicker'
 import { catalogApi, appointmentsApi, type Catalog } from '../../services/api'
 import useCatalogUpdates from '../../hooks/useCatalogUpdates'
 import { reconcileCatalog } from '../../utils/catalog'
@@ -23,14 +24,6 @@ interface FormData {
   client_phone: string
   client_email: string
   notes: string
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  corte: 'Corte',
-  barba: 'Barba',
-  combo: 'Combo',
-  color: 'Color',
-  general: 'General',
 }
 
 export default function BookingPage() {
@@ -143,11 +136,6 @@ export default function BookingPage() {
     const matching = barbers.filter(b => links.some(l => l.barber_id === b.id && l.service_id === id))
     return { ...current, service_id: id, barber_id: matching.some(b => b.id === current.barber_id) ? current.barber_id : matching.length === 1 ? matching[0].id : '', appointment_time: '' }
   })
-  const servicesByCategory = eligibleServices.reduce<Record<string, Service[]>>((acc, s) => {
-    if (!acc[s.category]) acc[s.category] = []
-    acc[s.category].push(s)
-    return acc
-  }, {})
 
   const today = localDate()
   const maxDate = addCalendarDays(today, horizonDays)
@@ -207,7 +195,7 @@ export default function BookingPage() {
   }
 
   return (
-    <div className={`${styles.page} ${step > 1 ? styles.inProgress : ''}`}>
+    <div className={`${styles.page} ${step > 1 ? styles.inProgress : ''} ${step === 2 ? styles.schedulePage : ''}`}>
       <section className={styles.hero} aria-labelledby="booking-title">
         <p className={styles.eyebrow}><span /> TU ESTILO EMPIEZA AQUÍ</p>
         <h1 id="booking-title" className={styles.heroTitle}>Reserva tu <span>cita.</span></h1>
@@ -249,15 +237,7 @@ export default function BookingPage() {
             {!loadingCatalog && !loadError && eligibleServices.length > 0 && <>
             <div className={styles.section} id="servicios">
               <label className={styles.sectionLabel} htmlFor="booking-service"><Scissors size={21} aria-hidden="true" />Servicio</label>
-              <div className={styles.serviceSelect}>
-                <Scissors size={25} aria-hidden="true" />
-                <div className={styles.serviceInfo} aria-hidden="true"><span className={styles.serviceName}>{selectedService?.name || 'Selecciona tu servicio'}</span><span className={styles.serviceDesc}>{selectedService ? `${selectedService.duration} min  ·  ${formatPrice(selectedService.price)}` : 'Elige el corte o tratamiento para tu visita'}</span></div>
-                <ChevronDown size={20} aria-hidden="true" />
-                <select id="booking-service" value={form.service_id} onChange={e => selectService(e.target.value)} required>
-                  <option value="" disabled>Selecciona tu servicio</option>
-                  {Object.entries(servicesByCategory).map(([cat, svcs]) => <optgroup key={cat} label={CATEGORY_LABELS[cat] || cat}>{svcs.map(s => <option key={s.id} value={s.id}>{s.name} · {s.duration} min · {formatPrice(s.price)}</option>)}</optgroup>)}
-                </select>
-              </div>
+              <ServicePicker id="booking-service" value={form.service_id} services={eligibleServices} onChange={selectService} />
             </div>
             <div className={styles.section} id="barberos" role="group" aria-labelledby="barber-label">
               <p className={styles.sectionLabel} id="barber-label"><UserRound size={21} aria-hidden="true" />Barbero</p>

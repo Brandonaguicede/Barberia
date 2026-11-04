@@ -1,3 +1,4 @@
+import { chooseService } from './helpers/service-picker.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
@@ -30,9 +31,9 @@ test('calendario: teclado, limites, barbero real, reintento y respuestas antigua
       return reply([])
     })
     await page.goto(process.env.SMOKE_URL || 'http://localhost:5173')
-    await page.getByLabel('Servicio', { exact: true }).selectOption('corte')
+    await chooseService(page, 'corte')
     assert.equal(await page.getByRole('button', { name: /Axel/ }).getAttribute('aria-pressed'), 'true')
-    await page.getByLabel('Servicio', { exact: true }).selectOption('barba')
+    await chooseService(page, 'barba')
     assert.equal(await page.getByRole('button', { name: /Bruno/ }).getAttribute('aria-pressed'), 'true')
     assert.equal(await page.getByRole('button', { name: /Axel/ }).count(), 0)
     await page.getByRole('button', { name: 'Continuar', exact: true }).click()
