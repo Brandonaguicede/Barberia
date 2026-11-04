@@ -228,7 +228,6 @@ export default function BookingPage() {
   return (
     <div className={`${styles.page} ${step > 1 ? styles.inProgress : ''} ${step === 2 ? styles.schedulePage : ''}`}>
       <section className={styles.hero} aria-labelledby="booking-title">
-        <img className={styles.barberPole} src="/images/barber-pole.svg" alt="" aria-hidden="true" />
         <h1 id="booking-title" className={styles.heroTitle}>Elegí tu <span>Estilo.</span></h1>
         <p className={styles.heroSub}>Reservá tu próximo corte con nosotros.</p>
         <div className={styles.benefits} aria-label="Cómo reservar">

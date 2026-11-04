@@ -6,7 +6,7 @@ export default function ClientLayout() {
   const location = useLocation()
   const isBooking = location.pathname === '/'
 
-  return <div className={styles.root}>
+  return <div className={`${styles.root} ${isBooking ? styles.bookingRoot : ''}`}>
     <a className={styles.skipLink} href="#contenido">Ir al contenido</a>
     <header className={styles.header}>
       <div className={styles.headerInner}>
