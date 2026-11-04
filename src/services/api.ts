@@ -247,6 +247,8 @@ export const appointmentsApi = {
         `${params.date}T23:59:59.999-06:00`,
       );
     }
+    if (params.from) q = q.gte("starts_at", `${params.from}T00:00:00-06:00`);
+    if (params.before) q = q.lt("starts_at", `${params.before}T00:00:00-06:00`);
     if (params.status) q = q.eq("status", params.status);
     if (params.barber_id) q = q.eq("barber_id", params.barber_id);
     return (await result(q)).map(normalizeAppointment);
