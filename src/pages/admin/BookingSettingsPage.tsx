@@ -100,11 +100,11 @@ export default function BookingSettingsPage() {
   const availableAccounts = users.filter(u => u.role === 'Barber' && !u.barber_id)
   const disabled = busy || loadingDetails
 
-  const run = async (operation: () => Promise<void>) => {
+  const run = async (operation: () => Promise<string | void>) => {
     if (busy || loadingDetails) return
     setBusy(true); setError('')
-    try { await operation(); notifyCatalogChanged(); setRefresh(n => n + 1); toast.success('Cambios guardados') }
-    catch (e) { setError(e instanceof Error ? e.message : (e as { message?: string })?.message || 'No pudimos guardar los cambios.') }
+    try { const message = await operation(); notifyCatalogChanged(); setRefresh(n => n + 1); toast.success(message || 'Cambios guardados') }
+    catch (e) { setError(e instanceof Error ? e.message : (e as { message?: string })?.message || 'No pudimos guardar los cambios.'); requestAnimationFrame(() => document.querySelector('[role="alert"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' })) }
     finally { setBusy(false) }
   }
   const saveAccount = () => run(async () => {
@@ -123,9 +123,16 @@ export default function BookingSettingsPage() {
     if (!allowed || !barber) throw new Error('No tienes permiso para editar esta agenda.')
     if (!start || !end || start >= end) throw new Error('La hora o fecha de fin debe ser posterior al inicio.')
     if (mode !== 'barber_time_off' && selectedDays.length === 0) throw new Error('Selecciona al menos un día de la semana.')
-    if (mode !== 'barber_time_off' && rows.some(row => row.id !== editing && selectedDays.includes(row.weekday!) && start < (row.closes_at || row.ends_at || '').slice(0, 5) && end > (row.opens_at || row.starts_at || '').slice(0, 5))) throw new Error('El intervalo coincide con otra regla de ese día. Edita la regla existente o elige otras horas.')
+    const duplicateDays = mode === 'barber_schedules' && !editing
+      ? selectedDays.filter(day => rows.some(row => row.weekday === day && row.opens_at?.slice(0, 5) === start && row.closes_at?.slice(0, 5) === end))
+      : []
+    const daysToSave = mode === 'barber_schedules' && !editing
+      ? selectedDays.filter(day => !duplicateDays.includes(day))
+      : selectedDays
+    if (mode !== 'barber_time_off' && rows.some(row => row.id !== editing && daysToSave.includes(row.weekday!) && start < (row.closes_at || row.ends_at || '').slice(0, 5) && end > (row.opens_at || row.starts_at || '').slice(0, 5))) throw new Error('El intervalo coincide con otra regla de esos días. Ajusta la selección o edita el horario existente.')
+    if (mode === 'barber_schedules' && !editing && daysToSave.length === 0) throw new Error('Ese horario ya está guardado para todos los días seleccionados. Elige días nuevos o edita el horario existente.')
     const payloads: Record<string, string | number | null>[] = mode === 'barber_time_off' ? [{ barber_id: barber, starts_at: new Date(`${start}:00-06:00`).toISOString(), ends_at: new Date(`${end}:00-06:00`).toISOString(), reason: reason.trim() || null }]
-      : selectedDays.map(weekday => ({ barber_id: barber, weekday, ...(mode === 'barber_schedules' ? { opens_at: start, closes_at: end } : { starts_at: start, ends_at: end }) }))
+      : (editing ? selectedDays.slice(0, 1) : daysToSave).map(weekday => ({ barber_id: barber, weekday, ...(mode === 'barber_schedules' ? { opens_at: start, closes_at: end } : { starts_at: start, ends_at: end }) }))
     if (editing) {
       const result = await supabase.from(mode).update(payloads[0]).eq('id', editing).eq('barber_id', barber).select('id').single()
       if (result.error) throw result.error
@@ -134,6 +141,7 @@ export default function BookingSettingsPage() {
       if (result.error) throw result.error
     }
     resetDraft()
+    return duplicateDays.length ? `Horario guardado. Se conservó el de ${duplicateDays.map(day => DAYS[day].toLocaleLowerCase('es')).join(', ')} y se añadieron los demás días.` : undefined
   })
   const editRow = (row: Availability) => {
     setEditing(row.id); setSelectedDays(row.weekday === undefined ? [] : [row.weekday]); setReason(row.reason || '')
@@ -188,7 +196,7 @@ export default function BookingSettingsPage() {
         <ul className={styles.availabilityList}>{rows.map(row => <li key={row.id}><span><strong>{mode === 'barber_time_off' ? `${prettyDate(row.starts_at)} — ${prettyDate(row.ends_at)}` : `${DAYS[row.weekday!]} · ${(row.opens_at || row.starts_at || '').slice(0, 5)} — ${(row.closes_at || row.ends_at || '').slice(0, 5)}`}</strong>{row.reason && <small>{row.reason}</small>}</span>{allowed && <div className={styles.rowActions}><button className={styles.secondary} disabled={disabled} onClick={() => editRow(row)} aria-label={`Editar ${mode === 'barber_time_off' ? 'bloqueo' : DAYS[row.weekday!]}`}><Pencil size={15} aria-hidden="true" />Editar</button><button className={styles.iconButton} disabled={disabled} onClick={() => removeRow(row)} aria-label={`Eliminar ${mode === 'barber_time_off' ? 'bloqueo' : DAYS[row.weekday!]}`}><Trash2 size={16} aria-hidden="true" /></button></div>}</li>)}</ul>
         {!loadingDetails && rows.length === 0 && <p className={styles.empty}>{mode === 'barber_schedules' ? 'Todavía no hay horario semanal. Agrégalo abajo para que se generen horas disponibles.' : mode === 'barber_breaks' ? 'No hay descansos configurados.' : 'No hay vacaciones ni bloqueos configurados.'}</p>}
         {!allowed ? <p className={styles.hint}>La administración debe habilitar la edición de tu disponibilidad.</p> : <form id="availability-editor" className={styles.editor} onSubmit={e => { e.preventDefault(); void saveAvailability() }}><h3>{editing ? 'Editar regla' : mode === 'barber_schedules' ? 'Agregar horario de trabajo' : mode === 'barber_breaks' ? 'Agregar descanso' : 'Agregar vacaciones o bloqueo'}</h3><fieldset disabled={disabled} className={styles.editorFields}>
-          {mode !== 'barber_time_off' && <fieldset className={styles.days}><legend>{editing ? 'Día' : 'Días de la semana'}</legend><div>{[1, 2, 3, 4, 5, 6, 0].map(day => <label key={day} className={selectedDays.includes(day) ? styles.daySelected : ''}><input type={editing ? 'radio' : 'checkbox'} name="availability-days" checked={selectedDays.includes(day)} onChange={() => setSelectedDays(current => editing ? [day] : current.includes(day) ? current.filter(d => d !== day) : [...current, day])} />{DAYS[day]}</label>)}</div>{!editing && <button type="button" className={styles.textButton} onClick={() => setSelectedDays([1, 2, 3, 4, 5])}>Seleccionar lunes a viernes</button>}</fieldset>}
+          {mode !== 'barber_time_off' && <fieldset className={styles.days}><legend>{editing ? 'Día' : 'Días de la semana'}</legend><div>{[1, 2, 3, 4, 5, 6, 0].map(day => <label key={day} className={selectedDays.includes(day) ? styles.daySelected : ''}><input type={editing ? 'radio' : 'checkbox'} name="availability-days" checked={selectedDays.includes(day)} onChange={() => setSelectedDays(current => editing ? [day] : current.includes(day) ? current.filter(d => d !== day) : [...current, day])} />{DAYS[day]}</label>)}</div>{!editing && <button type="button" className={styles.textButton} onClick={() => setSelectedDays([1, 2, 3, 4, 5])}>Seleccionar lunes a viernes</button>}</fieldset>}{mode === 'barber_schedules' && !editing && <p className={styles.hint}>Si un día ya tiene exactamente ese horario, se conserva y se guardan los demás.</p>}
           <div className={styles.timeFields}><FormField label={mode === 'barber_time_off' ? 'Fecha y hora de inicio' : 'Hora de inicio'} required><Input required type={mode === 'barber_time_off' ? 'datetime-local' : 'time'} value={start} onChange={e => setStart(e.target.value)} /></FormField><FormField label={mode === 'barber_time_off' ? 'Fecha y hora de fin' : 'Hora de fin'} required><Input required type={mode === 'barber_time_off' ? 'datetime-local' : 'time'} value={end} onChange={e => setEnd(e.target.value)} /></FormField></div>
           {mode === 'barber_time_off' && <FormField label="Motivo (opcional)"><Input maxLength={500} value={reason} onChange={e => setReason(e.target.value)} placeholder="Ej: vacaciones" /></FormField>}
           <div className={styles.formActions}><button className={styles.primary} disabled={disabled}>{editing ? <Check size={17} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}{busy ? 'Guardando…' : editing ? 'Guardar cambios' : mode === 'barber_schedules' ? 'Guardar horario' : mode === 'barber_breaks' ? 'Guardar descanso' : 'Guardar bloqueo'}</button>{editing && <button type="button" className={styles.secondary} disabled={disabled} onClick={resetDraft}>Cancelar edición</button>}</div>
