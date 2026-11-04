@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import toast from '../../services/toast'
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3, Scissors, ShieldCheck, UserRound } from 'lucide-react'
 import { localDate } from '../../utils/booking'
-import { addCalendarDays } from '../../utils/calendar'
+import { addCalendarDays, calendarDateLabel } from '../../utils/calendar'
 import BookingCalendar from '../../components/client/BookingCalendar'
 import ServicePicker from '../../components/client/ServicePicker'
 import { catalogApi, appointmentsApi, type Catalog } from '../../services/api'
@@ -30,6 +30,7 @@ export default function BookingPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [step, setStep] = useState<Step>(1)
+  const [mobileScheduleStage, setMobileScheduleStage] = useState<'date' | 'time'>('date')
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [slotResult, setSlotResult] = useState<{ key: string; slots: string[]; loading: boolean; error: string }>({ key: '', slots: [], loading: false, error: '' })
@@ -154,7 +155,21 @@ export default function BookingPage() {
   const slotsError = slotResult.key === slotKey ? slotResult.error : ''
   const morningSlots = slots.filter(time => Number(time.split(':')[0]) < 12)
   const afternoonSlots = slots.filter(time => Number(time.split(':')[0]) >= 12)
-  const selectDate = (date: string) => setForm(current => ({ ...current, appointment_date: date, appointment_time: '' }))
+  const selectDate = (date: string) => {
+    setForm(current => ({ ...current, appointment_date: date, appointment_time: '' }))
+    setMobileScheduleStage('time')
+  }
+
+  useEffect(() => {
+    if (step !== 2) return
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('mobile-schedule-stage')?.scrollIntoView({
+        block: 'start',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [mobileScheduleStage, step])
 
   const formatTime = (t: string) => {
     const [h, m] = t.split(':').map(Number)
@@ -196,7 +211,13 @@ export default function BookingPage() {
   const stepIcons = [Scissors, CalendarDays, UserRound, Check]
   const stepDescriptions = ['Selecciona el servicio que deseas y el profesional.', 'Encuentra un espacio que se ajuste a tu agenda.', 'Indica un correo válido para recibir el aviso de tu cita.', 'Revisa los detalles. Ya casi está todo listo.']
   const changeStep = (next: Step) => {
-    if (next === 2 && (!form.appointment_date || form.appointment_date < today || form.appointment_date > maxDate)) selectDate(today)
+    if (next === 2) {
+      const isMobile = window.matchMedia('(max-width: 760px)').matches
+      if (!isMobile && (!form.appointment_date || form.appointment_date < today || form.appointment_date > maxDate)) {
+        setForm(current => ({ ...current, appointment_date: today, appointment_time: '' }))
+      }
+      setMobileScheduleStage(form.appointment_time ? 'time' : 'date')
+    }
     setStep(next)
     requestAnimationFrame(() => {
       document.getElementById('booking-step-title')?.focus({ preventScroll: true })
@@ -271,32 +292,43 @@ export default function BookingPage() {
         {step === 2 && (
           <div className={styles.stepContent}>
             <div className={styles.bookingContext}><span className={styles.contextIcon}><Scissors size={20} aria-hidden="true" /></span><div><strong>{selectedService?.name}</strong><span>Con {selectedBarber?.name.trim()} · {selectedService?.duration} min</span></div><button type="button" onClick={() => changeStep(1)}>Cambiar</button></div>
-            <div className={styles.dateTimeLayout}>
-            <BookingCalendar value={form.appointment_date} minDate={today} maxDate={maxDate} workingWeekdays={barberWorkdays} onChange={selectDate} />
-            {form.appointment_date && (
-              <div className={`${styles.section} ${styles.timesSection}`}>
-                <div className={styles.timesHeading}><p className={styles.sectionLabel}><Clock3 size={20} aria-hidden="true" />Elige tu hora</p>{!loadingSlots && !slotsError && slots.length > 0 && <span>{slots.length} {slots.length === 1 ? 'hora disponible' : 'horas disponibles'}</span>}</div>
-                {loadingSlots ? (
-                  <div className={styles.skeletons} role="status" aria-label="Cargando horarios"><span /><span /></div>
-                ) : slotsError ? (
-                  <div className={styles.slotMessage} role="alert"><p>{slotsError}</p><button className={styles.retryBtn} onClick={() => setSlotAttempt(n => n + 1)}>Volver a intentar <ArrowRight size={16} aria-hidden="true" /></button></div>
-                ) : slots.length === 0 ? (
-                  <div className={styles.slotMessage}><p>No quedan horas para este día.</p><span>Elige otra fecha y encontraremos un espacio para ti.</span>{form.appointment_date < maxDate && <button className={styles.retryBtn} onClick={() => selectDate(addCalendarDays(form.appointment_date, 1))}>Ver el siguiente día <ArrowRight size={16} aria-hidden="true" /></button>}</div>
-                ) : (
-                  <div className={styles.timeGroups}>
-                    {[{ label: 'Por la mañana', entries: morningSlots }, { label: 'Por la tarde', entries: afternoonSlots }].filter(group => group.entries.length > 0).map(group => <div key={group.label}><p className={styles.timeGroupLabel}>{group.label}</p><div className={styles.slotsGrid}>{group.entries.map(slot => (
-                      <button key={slot} aria-pressed={form.appointment_time === slot} className={`${styles.slotBtn} ${form.appointment_time === slot ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, appointment_time: slot }))}>
-                        {formatTime(slot)}{form.appointment_time === slot && <Check size={14} aria-hidden="true" />}
-                      </button>
-                    ))}</div></div>)}
-                  </div>
-                )}
+            <div className={styles.mobileStageHeader} id="mobile-schedule-stage" aria-live="polite">
+              <span className={styles.mobileStageCount}>{mobileScheduleStage === 'date' ? '1' : '2'}<small>/2</small></span>
+              <div>
+                <strong>{mobileScheduleStage === 'date' ? 'Elige un día' : 'Elige una hora'}</strong>
+                <span>{mobileScheduleStage === 'date' ? 'Selecciona una fecha disponible.' : calendarDateLabel(form.appointment_date)}</span>
               </div>
-            )}
+              {mobileScheduleStage === 'time' && <button type="button" onClick={() => setMobileScheduleStage('date')}>Cambiar fecha</button>}
+            </div>
+            <div className={`${styles.dateTimeLayout} ${mobileScheduleStage === 'date' ? styles.mobileDateStage : styles.mobileTimeStage}`}>
+              <div className={styles.calendarColumn}>
+                <div className={styles.calendarShell}>
+                  <BookingCalendar value={form.appointment_date} minDate={today} maxDate={maxDate} workingWeekdays={barberWorkdays} onChange={selectDate} />
+                </div>
+              </div>
+              {form.appointment_date && (
+                <div className={`${styles.section} ${styles.timesSection}`}>
+                  <div className={styles.timesHeading}><p className={styles.sectionLabel}><Clock3 size={20} aria-hidden="true" />Elige tu hora</p>{!loadingSlots && !slotsError && slots.length > 0 && <span>{slots.length} {slots.length === 1 ? 'hora disponible' : 'horas disponibles'}</span>}</div>
+                  {loadingSlots ? (
+                    <div className={styles.skeletons} role="status" aria-label="Cargando horarios"><span /><span /></div>
+                  ) : slotsError ? (
+                    <div className={styles.slotMessage} role="alert"><p>{slotsError}</p><button className={styles.retryBtn} onClick={() => setSlotAttempt(n => n + 1)}>Volver a intentar <ArrowRight size={16} aria-hidden="true" /></button></div>
+                  ) : slots.length === 0 ? (
+                    <div className={styles.slotMessage}><p>No quedan horas para este día.</p><span>Elige otra fecha y encontraremos un espacio para ti.</span>{form.appointment_date < maxDate && <button className={styles.retryBtn} onClick={() => selectDate(addCalendarDays(form.appointment_date, 1))}>Ver el siguiente día <ArrowRight size={16} aria-hidden="true" /></button>}</div>
+                  ) : (
+                    <div className={styles.timeGroups}>
+                      {[{ label: 'Por la mañana', entries: morningSlots }, { label: 'Por la tarde', entries: afternoonSlots }].filter(group => group.entries.length > 0).map(group => <div key={group.label}><p className={styles.timeGroupLabel}>{group.label}</p><div className={styles.slotsGrid}>{group.entries.map(slot => (
+                        <button key={slot} aria-pressed={form.appointment_time === slot} className={`${styles.slotBtn} ${form.appointment_time === slot ? styles.selected : ''}`} onClick={() => setForm(f => ({ ...f, appointment_time: slot }))}>
+                          {formatTime(slot)}{form.appointment_time === slot && <Check size={14} aria-hidden="true" />}
+                        </button>
+                      ))}</div></div>)}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
-
         {step === 3 && (
           <div className={styles.stepContent}>
             <div className={styles.formGrid}>

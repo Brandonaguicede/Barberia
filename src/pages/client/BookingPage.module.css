@@ -110,3 +110,18 @@
 @media(max-width:760px) { .inProgress .hero { display:none; } .inProgress { gap:0; } .bookingContext { padding:11px; gap:9px; } .contextIcon { width:32px; height:32px; } .bookingContext strong { font-size:11px; } .bookingContext span:not(.contextIcon) { font-size:9px; } .slotsGrid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .slotBtn { font-size:11px; } }
 @media(max-width:760px) { .schedulePage .card { padding:0; border:0; border-radius:0; background:none; box-shadow:none; } .schedulePage .bookingContext { margin:22px 0; padding:13px; } .schedulePage .bookingContext strong { font-size:14px; } .schedulePage .bookingContext span:not(.contextIcon) { font-size:12px; } .schedulePage .bookingContext button { font-size:12px; } .schedulePage .contextIcon { width:38px; height:38px; } .schedulePage .timesSection { margin-top:26px; } .schedulePage .timesHeading { margin-bottom:17px; } .schedulePage .timeGroupLabel { margin-bottom:11px; } .schedulePage .slotMessage { padding:20px 18px; } .schedulePage .slotMessage p { font-size:14px; } .schedulePage .slotMessage>span { font-size:12px; } .schedulePage .slotMessage .retryBtn { font-size:12px; min-height:45px; } }
 @media(max-width:360px) { .schedulePage .bookingContext { padding:11px; gap:8px; } .schedulePage .bookingContext strong { font-size:13px; } .schedulePage .bookingContext span:not(.contextIcon) { font-size:11px; } .schedulePage .slotBtn { font-size:13px; } }
+.mobileStageHeader { display:none; }
+.calendarColumn,.calendarShell { min-width:0; }
+@media(max-width:760px) {
+  .mobileStageHeader { display:flex; align-items:center; gap:12px; min-height:48px; margin:2px 0 16px; scroll-margin-top:100px; }
+  .mobileStageCount { display:grid; place-items:center; width:36px; height:36px; flex:0 0 36px; border:1px solid #ed536681; border-radius:50%; background:#d9233818; color:#ff91a2; font-size:15px; font-weight:750; font-variant-numeric:tabular-nums; }
+  .mobileStageCount small { margin-left:1px; color:#b8aeb7; font-size:9px; font-weight:600; }
+  .mobileStageHeader>div { display:grid; gap:3px; flex:1; min-width:0; }
+  .mobileStageHeader strong { color:#f5f2f6; font-size:14px; font-weight:750; }
+  .mobileStageHeader>div span { color:#aeb6c4; font-size:11px; line-height:1.45; text-transform:capitalize; }
+  .mobileStageHeader button { min-height:40px; padding:8px 11px; border:1px solid #e45b7280; border-radius:9px; background:#d9233814; color:#ffc1ce; font-size:11px; font-weight:700; }
+  .mobileDateStage .timesSection { display:none; }
+  .mobileTimeStage .calendarShell { display:none; }
+  .mobileTimeStage .timesSection { margin-top:0; }
+  .mobileTimeStage .timesHeading .sectionLabel { display:none; }
+}

@@ -41,3 +41,8 @@
 @media(max-width:760px) { .calendar { padding:20px 12px 16px; } .monthNav { margin:0 3px 21px; } .monthNav h3 { font-size:22px; } .shortcuts button { padding:12px; font-size:13px; } .shortcuts span { font-size:11px; } .day { min-height:44px; font-size:15px; } .dateSummary { font-size:13px; } }
 @media(max-width:360px) { .calendar { padding:18px 9px 15px; } .weekRow { gap:1px; } .day { min-height:40px; font-size:14px; border-radius:10px; } .monthNav h3 { font-size:19px; } .monthNav h3 span { font-size:13px; } .monthButtons button { width:33px; height:38px; } .monthButtons { gap:5px; } .shortcuts { gap:7px; } .shortcuts button { font-size:12px; padding:11px 9px; min-height:62px; } }
 @media(prefers-reduced-motion:reduce) { .day,.shortcuts button,.monthButtons button { transition:none; } }
+@media(max-width:760px) {
+  .workdays,.shortcuts,.legend,.rangeNote,.dateSummary,.monthNav p { display:none; }
+  .calendar { padding:17px 10px 14px; }
+  .monthNav { margin:0 3px 13px; }
+}
