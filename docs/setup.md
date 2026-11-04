@@ -1,6 +1,6 @@
 # Desarrollo y activación
 
-Este cambio no aplica migraciones ni despliega funciones remotamente. No usa Resend, WhatsApp Business API ni un dominio propio. Los clientes no reciben correos automáticos: guardan el enlace, usan WhatsApp manualmente o descargan el comprobante. Los avisos automáticos son internos y Web Push para el personal.
+Las confirmaciones de reserva se pueden enviar mediante el puente gratuito de Google Apps Script en `integrations/google-apps-script/Code.gs`. Usa la cuenta Gmail del negocio, sin dominio propio ni proveedor de pago. Cada cita confirmada envía un correo al cliente (si indicó correo) y otro al barbero (si su perfil tiene correo). El envío es de mejor esfuerzo: un fallo de Gmail no cancela la cita.
 
 ## Requisitos locales
 
@@ -24,7 +24,19 @@ Copiar `.env.example` a `.env.local`. `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_
 - VAPID_PUBLIC_KEY y VAPID_PRIVATE_KEY: par estable generado localmente; `npx web-push generate-vapid-keys` en un entorno con acceso npm. Usar la pública también en VITE_VAPID_PUBLIC_KEY.
 - VAPID_SUBJECT: contacto `mailto:correo@ejemplo.com`. No exige un dominio propio.
 - PUSH_WORKER_SECRET: secreto independiente que autoriza exclusivamente el proceso de cola.
+- GOOGLE_APPS_SCRIPT_URL: URL del web app de Google Apps Script desplegado para el puente de correo.
+- GOOGLE_APPS_SCRIPT_SECRET: secreto largo y aleatorio compartido; se guarda también en Apps Script como propiedad `MAILER_SECRET`.
 
+
+## Correos de citas con Gmail gratuito
+
+1. En la cuenta Google que enviará los correos, crea un proyecto en `https://script.google.com` y pega `integrations/google-apps-script/Code.gs` en `Code.gs`.
+2. En **Configuración del proyecto > Propiedades de la secuencia de comandos**, agrega `MAILER_SECRET` con un secreto aleatorio largo. Mantén el valor privado y configúralo también en Supabase como `GOOGLE_APPS_SCRIPT_SECRET`.
+3. En el editor, selecciona `authorizeEmailSending` y ejecútala una vez. Inicia sesión en la cuenta Gmail emisora y autoriza el envío de correo.
+4. Selecciona **Implementar > Nueva implementación > Aplicación web**, ejecuta como propietario y permite acceso a cualquiera. El código valida el secreto compartido en cada solicitud. Copia la URL `/exec` y configúrala en Supabase como `GOOGLE_APPS_SCRIPT_URL`.
+5. Configura ambos secretos en las variables de Edge Functions de Supabase y vuelve a desplegar `booking`. Guarda el correo del barbero en su perfil; el cliente debe escribir su correo al reservar.
+
+Las cuentas personales de Gmail tienen una cuota publicada de 100 destinatarios por día para Apps Script. Una reserva normal consume dos destinatarios. Google puede cambiar los límites y los mensajes pueden retrasarse o llegar a spam; el comprobante de la web y el centro de notificaciones siguen siendo la referencia de la cita.
 ## Cola y recordatorios
 
 Las transacciones generan notifications y push_jobs por dispositivo. push-worker reclama hasta 50 trabajos con SKIP LOCKED y arrendamiento de 5 minutos, usa cifrado Web Push estándar vía web-push, reintenta con backoff hasta 6 intentos, retira endpoints 404/410 y no incluye datos personales en pantalla bloqueada. Las notificaciones persisten aunque el dispositivo no tenga push activado. Realtime actualiza la interfaz y hay recuperación periódica de avisos.

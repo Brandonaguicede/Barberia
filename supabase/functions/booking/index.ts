@@ -8,6 +8,7 @@ import {
   serve,
   token,
 } from "../_shared/http.ts";
+import { sendBookingEmails } from "../_shared/booking-email.ts";
 
 serve(async (req) => {
   const early = preflight(req);
@@ -88,6 +89,7 @@ serve(async (req) => {
             : error.message,
         }, 409);
       }
+      await sendBookingEmails(db, data, raw);
       return json({ ...data, access_token: raw });
     }
     if (["get", "cancel", "reschedule"].includes(String(action))) {
