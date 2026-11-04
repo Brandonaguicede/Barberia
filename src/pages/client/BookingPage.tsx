@@ -228,7 +228,6 @@ export default function BookingPage() {
   return (
     <div className={`${styles.page} ${step > 1 ? styles.inProgress : ''} ${step === 2 ? styles.schedulePage : ''}`}>
       <section className={styles.hero} aria-labelledby="booking-title">
-        <p className={styles.eyebrow}><span /> TU ESTILO EMPIEZA AQUÍ</p>
         <h1 id="booking-title" className={styles.heroTitle}>Reserva tu <span>cita.</span></h1>
         <p className={styles.heroSub}>Selecciona el servicio, barbero, fecha y horario que mejor se ajuste a tu agenda.</p>
         <div className={styles.benefits} aria-label="Cómo reservar">
