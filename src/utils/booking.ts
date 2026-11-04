@@ -20,10 +20,20 @@ export function localTime(value: string): string {
 }
 export const privateUrl = (token: string) =>
   `${window.location.origin}/mi-cita/${encodeURIComponent(token)}`;
-export function whatsappMessage(a: Appointment, url: string) {
-  return `Hola, esta es la información de mi reserva:\n\nBarbería: ${
-    a.shop_name || "TENORIO BARBER"
-  }\nServicio: ${a.service_name}\nBarbero: ${a.barber_name}\nFecha: ${a.appointment_date}\nHora: ${a.appointment_time}\n\nConsultar, cancelar o reprogramar mi cita:\n${url}\n\n¡Gracias!`;
+export function bookingReceiptText(a: Appointment, url: string) {
+  return [
+    `Comprobante de cita - ${a.shop_name || "TENORIO BARBER"}`,
+    `Servicio: ${a.service_name}`,
+    `Barbero: ${a.barber_name}`,
+    `Fecha: ${a.appointment_date}`,
+    `Hora: ${a.appointment_time}`,
+    `Cliente: ${a.client_name}`,
+    `Teléfono: ${a.client_phone}`,
+    ...(a.client_email ? [`Correo: ${a.client_email}`] : []),
+    "",
+    `Gestionar la cita: ${url}`,
+    "Conserva este enlace privado.",
+  ].join("\n");
 }
 const escapeICS = (v: string) =>
   v.replace(/\\/g, "\\\\").replace(/\r\n|\r|\n/g, "\\n").replace(/,/g, "\\,")

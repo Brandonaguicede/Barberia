@@ -168,7 +168,8 @@ export default function BookingPage() {
 
   const validSelection = !!selectedService && !!selectedBarber && eligibleBarbers.some(b => b.id === form.barber_id)
   const validTime = !!form.appointment_date && form.appointment_date >= today && form.appointment_date <= maxDate && !loadingSlots && !slotsError && slots.includes(form.appointment_time)
-  const validContact = form.client_name.trim().length > 0 && /^\+?[0-9 ()-]{8,25}$/.test(form.client_phone) && form.client_phone.replace(/\D/g, '').length >= 8
+  const validEmail = form.client_email.trim().length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.client_email.trim())
+  const validContact = form.client_name.trim().length > 0 && /^\+?[0-9 ()-]{8,25}$/.test(form.client_phone) && form.client_phone.replace(/\D/g, '').length >= 8 && validEmail
   const canGoNext = () => {
     if (step === 1) return validSelection
     if (step === 2) return validTime
@@ -181,9 +182,9 @@ export default function BookingPage() {
     if (!validSelection || !validTime || !validContact) { setStep(!validSelection ? 1 : !validTime ? 2 : 3); return }
     setSubmitting(true)
     try {
-      const appt = await appointmentsApi.create(form)
+      const appt = await appointmentsApi.create({ ...form, client_email: form.client_email.trim() })
       toast.success('Cita confirmada')
-      navigate(`/mi-cita/${appt.access_token}`, { replace: true })
+      navigate(`/mi-cita/${appt.access_token}`, { replace: true, state: { justBooked: true } })
     } catch (err: any) {
       toast.error(err.message || 'Error al agendar la cita')
     } finally {
@@ -193,7 +194,7 @@ export default function BookingPage() {
 
   const steps = ['Servicio', 'Horario', 'Datos', 'Confirmar']
   const stepIcons = [Scissors, CalendarDays, UserRound, Check]
-  const stepDescriptions = ['Selecciona el servicio que deseas y el profesional.', 'Encuentra un espacio que se ajuste a tu agenda.', 'Completa tus datos para identificar tu reserva.', 'Revisa los detalles. Ya casi está todo listo.']
+  const stepDescriptions = ['Selecciona el servicio que deseas y el profesional.', 'Encuentra un espacio que se ajuste a tu agenda.', 'Indica un correo válido para recibir el aviso de tu cita.', 'Revisa los detalles. Ya casi está todo listo.']
   const changeStep = (next: Step) => {
     if (next === 2 && (!form.appointment_date || form.appointment_date < today || form.appointment_date > maxDate)) selectDate(today)
     setStep(next)
@@ -301,9 +302,12 @@ export default function BookingPage() {
             <div className={styles.formGrid}>
               <FormField label="Nombre completo" required><Input autoComplete="name" placeholder="Tu nombre y apellido" value={form.client_name} onChange={set('client_name')} /></FormField>
               <FormField label="Telefono" required><Input type="tel" autoComplete="tel" inputMode="tel" placeholder="Ej: 8888-1234" value={form.client_phone} onChange={set('client_phone')} /></FormField>
-              <details className={styles.optionalFields}><summary>Añadir correo o una nota (opcional)</summary><div>
-              <FormField label="Correo electrónico (opcional)"><Input type="email" autoComplete="email" placeholder="tu@correo.com" value={form.client_email} onChange={set('client_email')} /></FormField>
-              <FormField label="Notas adicionales"><TextArea placeholder="Ej: preferencia de estilo o indicaciones." value={form.notes} onChange={set('notes')} /></FormField>
+              <FormField label="Correo electrónico" required error={form.client_email.trim().length > 0 && !validEmail ? "Ingresa un correo válido." : undefined}>
+                <Input type="email" required autoComplete="email" placeholder="tu@correo.com" value={form.client_email} onChange={set('client_email')} />
+              </FormField>
+              <p className={styles.emailHint}>Te enviaremos el aviso de la cita a este correo. Revisa Spam o Promociones si no aparece en Recibidos.</p>
+              <details className={styles.optionalFields}><summary>Añadir una nota (opcional)</summary><div>
+                <FormField label="Notas adicionales"><TextArea placeholder="Ej: preferencia de estilo o indicaciones." value={form.notes} onChange={set('notes')} /></FormField>
               </div></details>
             </div>
           </div>

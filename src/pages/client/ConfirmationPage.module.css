@@ -43,6 +43,45 @@
   text-align: center;
 }
 
+.emailNotice {
+  width: 100%;
+  max-width: 480px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+  background: rgb(var(--accent-rgb) / 0.1);
+  border: 1px solid rgb(var(--accent-rgb) / 0.3);
+  border-radius: var(--radius);
+  color: var(--text);
+  text-align: left;
+}
+
+.emailNotice > svg {
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.emailNotice strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.emailNotice p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.emailNotice b {
+  color: var(--text);
+  font-weight: 650;
+}
+
 .card {
   width: 100%;
   max-width: 480px;

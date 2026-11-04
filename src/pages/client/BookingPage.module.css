@@ -53,6 +53,7 @@
 .slotsLoading { display:flex; justify-content:center; padding:24px; }
 .noSlots { padding:12px 0; font-size:13px; color:var(--text-muted); }
 .formGrid { display:grid; grid-template-columns:1fr; gap:17px; }
+.emailHint { margin-top:-10px; color:#b8bfca; font-size:11px; line-height:1.65; }
 .summaryRow { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:11px 0; border-bottom:1px solid #ffffff0e; }
 .summaryKey { color:#afb5bf; font-size:12px; }
 .summaryVal { color:#efedf2; font-size:13px; text-align:right; font-weight:650; overflow-wrap:anywhere; }

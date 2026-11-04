@@ -75,10 +75,24 @@ function authorizeEmailSending() {
 }
 
 function sendEmail_(to, subject, htmlBody) {
+  const plainBody = htmlBody
+    .replace(/<a\b[^>]*href=(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi, "$3: $2")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|h1|td|tr|div)>/gi, "\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   MailApp.sendEmail({
     to,
     subject: subject.replace(/[\r\n]/g, " ").slice(0, 180),
-    body: "Tu correo requiere formato HTML para mostrar los detalles de la cita.",
+    body: plainBody,
     htmlBody,
     name: "Tenorio Barber",
   });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import toast from "../../services/toast";
 import type { Appointment } from "../../types";
 import { privateBookingApi } from "../../services/api";
@@ -9,6 +9,7 @@ import { FormField, Input, Select } from "../../components/shared/FormField";
 import styles from "./ConfirmationPage.module.css";
 export default function PrivateBookingPage() {
   const { token = "" } = useParams(), navigate = useNavigate();
+  const location = useLocation();
   const [a, setA] = useState<Appointment | null>(null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
@@ -96,7 +97,11 @@ export default function PrivateBookingPage() {
         )
         : a && (
           <>
-            <BookingReceipt appointment={a} url={privateUrl(token)} />
+            <BookingReceipt
+              appointment={a}
+              url={privateUrl(token)}
+              showEmailNotice={location.state?.justBooked === true}
+            />
             <div className="action-row">
               {a.can_reschedule && (
                 <button

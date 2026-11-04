@@ -1,14 +1,33 @@
+import { MailCheck } from "lucide-react";
 import toast from "../../services/toast";
 import type { Appointment } from "../../types";
 import StatusBadge from "../shared/StatusBadge";
-import WhatsAppBookingButton from "./WhatsAppBookingButton";
-import { calendarFile, download, whatsappMessage } from "../../utils/booking";
+import { bookingReceiptText, calendarFile, download } from "../../utils/booking";
 import styles from "../../pages/client/ConfirmationPage.module.css";
-export default function BookingReceipt(
-  { appointment: a, url }: { appointment: Appointment; url: string },
-) {
+
+export default function BookingReceipt({
+  appointment: a,
+  url,
+  showEmailNotice = false,
+}: {
+  appointment: Appointment;
+  url: string;
+  showEmailNotice?: boolean;
+}) {
   return (
     <>
+      {showEmailNotice && a.client_email && (
+        <div className={styles.emailNotice} role="status">
+          <MailCheck size={21} aria-hidden="true" />
+          <div>
+            <strong>Te enviaremos un correo con los detalles de tu cita</strong>
+            <p>
+              Lo enviaremos a <b>{a.client_email}</b>. Si no aparece en Recibidos,
+              revisa Spam o Promociones.
+            </p>
+          </div>
+        </div>
+      )}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <span className={styles.cardId}>
@@ -56,10 +75,15 @@ export default function BookingReceipt(
             <dt>Cliente</dt>
             <dd>{a.client_name}</dd>
           </div>
+          {a.client_email && (
+            <div>
+              <dt>Correo</dt>
+              <dd>{a.client_email}</dd>
+            </div>
+          )}
         </dl>
       </div>
       <div className="action-row">
-        <WhatsAppBookingButton appointment={a} url={url} />
         <button
           className="action-button"
           onClick={() => {
@@ -74,9 +98,9 @@ export default function BookingReceipt(
         </button>
         <button
           className="action-button"
-          onClick={() => download("mi-cita.txt", whatsappMessage(a, url))}
+          onClick={() => download("mi-cita.txt", bookingReceiptText(a, url))}
         >
-          Guardar comprobante
+          Descargar comprobante
         </button>
         {a.status === "confirmed" && (
           <button
@@ -93,8 +117,7 @@ export default function BookingReceipt(
         )}
       </div>
       <p className="muted">
-        WhatsApp abrirá el mensaje para que pulses Enviar. Conserva tu enlace
-        privado: permite gestionar esta cita.
+        Conserva tu enlace privado: permite gestionar esta cita.
       </p>
     </>
   );

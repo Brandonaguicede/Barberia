@@ -78,6 +78,16 @@ serve(async (req) => {
       if (!payload || typeof payload !== "object") {
         throw new Error("Datos inválidos");
       }
+      const clientEmail = typeof payload.client_email === "string"
+        ? payload.client_email.trim()
+        : "";
+      if (
+        clientEmail.length > 254 ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)
+      ) {
+        return json({ message: "Ingresa un correo válido para recibir la confirmación." }, 400);
+      }
+      payload.client_email = clientEmail;
       const { data, error } = await db.rpc("create_booking", {
         p_body: payload,
         p_hash: await hash(raw),
