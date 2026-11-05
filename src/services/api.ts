@@ -18,7 +18,12 @@ interface StaffProfile {
   subscription_expires_at: string | null;
   created_at: string;
   user_roles: { role: string } | null;
-  barbers: { id: string; name: string }[];
+  barbers: { id: string; name: string } | { id: string; name: string }[] | null;
+}
+// A unique barbers.user_id makes PostgREST return a to-one object.
+// Accept arrays too for compatibility with earlier schemas.
+function profileBarber(profile: StaffProfile) {
+  return Array.isArray(profile.barbers) ? profile.barbers[0] : profile.barbers;
 }
 async function result<T>(promise: PromiseLike<DbResult<T>>): Promise<T> {
   const { data, error } = await promise;
@@ -127,8 +132,8 @@ export const authApi = {
       role: role === "admin" ? "Admin" : "Barber",
       active: Number(p.active),
       subscriptionExpirationDate: p.subscription_expires_at || undefined,
-      barber_id: p.barbers?.[0]?.id || null,
-      barber_name: p.barbers?.[0]?.name,
+      barber_id: profileBarber(p)?.id || null,
+      barber_name: profileBarber(p)?.name,
     };
   },
   getUsers: async (): Promise<User[]> => {
@@ -143,8 +148,8 @@ export const authApi = {
       role: p.user_roles?.role === "admin" ? "Admin" : "Barber",
       active: Number(p.active),
       subscriptionExpirationDate: p.subscription_expires_at || undefined,
-      barber_id: p.barbers?.[0]?.id || null,
-      barber_name: p.barbers?.[0]?.name,
+      barber_id: profileBarber(p)?.id || null,
+      barber_name: profileBarber(p)?.name,
       created_at: p.created_at,
     }));
   },

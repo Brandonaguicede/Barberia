@@ -24,7 +24,7 @@ test('dashboard suma solo citas completadas y explica la instalación de avisos 
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' })
     const page = await context.newPage(), errors = []
     page.on('pageerror', error => errors.push(error.message))
-    const profile = { ...admin, active: true, subscription_expires_at: null, user_roles: { role: barberMode ? 'barber' : 'admin' }, barbers: barberMode ? [{ id: 'barber-1' }] : [] }
+    const profile = { ...admin, active: true, subscription_expires_at: null, user_roles: { role: barberMode ? 'barber' : 'admin' }, barbers: barberMode ? (process.env.SMOKE_BARBER_ARRAY ? [{ id: 'barber-1', name: 'Axel Tenorio' }] : { id: 'barber-1', name: 'Axel Tenorio' }) : null }
     await context.route(/\/(auth|rest|functions)\/v1\//, async route => {
       const request = route.request(), url = new URL(request.url()), method = request.method()
       const reply = (data, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) })
