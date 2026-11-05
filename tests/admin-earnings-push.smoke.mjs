@@ -6,6 +6,7 @@ import { chromium } from 'playwright'
 test('dashboard suma solo citas completadas y explica la instalación de avisos en iPhone', async () => {
   const browser = await chromium.launch({ headless: true, ...(process.env.SMOKE_BROWSER ? { executablePath: process.env.SMOKE_BROWSER } : {}) })
   const base = process.env.SMOKE_URL || 'http://localhost:5173'
+  const barberMode = process.env.SMOKE_ROLE === 'barber'
   const adminId = '10000000-0000-4000-8000-000000000092'
   const admin = { id: adminId, email: 'admin@finanzas.test', role: 'authenticated', aud: 'authenticated', created_at: new Date().toISOString(), app_metadata: { provider: 'email' }, user_metadata: {} }
   const jwt = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'), Buffer.from(JSON.stringify({ sub: adminId, role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url'), 'fixture'].join('.')
@@ -23,7 +24,7 @@ test('dashboard suma solo citas completadas y explica la instalación de avisos 
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' })
     const page = await context.newPage(), errors = []
     page.on('pageerror', error => errors.push(error.message))
-    const profile = { ...admin, active: true, subscription_expires_at: null, user_roles: { role: 'admin' }, barbers: [] }
+    const profile = { ...admin, active: true, subscription_expires_at: null, user_roles: { role: barberMode ? 'barber' : 'admin' }, barbers: barberMode ? [{ id: 'barber-1' }] : [] }
     await context.route(/\/(auth|rest|functions)\/v1\//, async route => {
       const request = route.request(), url = new URL(request.url()), method = request.method()
       const reply = (data, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) })
@@ -35,6 +36,7 @@ test('dashboard suma solo citas completadas y explica la instalación de avisos 
       if (table === 'profiles') return reply(url.searchParams.has('id') ? profile : [profile])
       if (url.pathname.endsWith('/rpc/appointment_stats')) return reply({ today: 2, pending: 0, upcoming: 1, monthlyRevenue: 10500 })
       if (table === 'appointments') {
+        if (barberMode) assert.equal(url.searchParams.get('barber_id'), 'eq.barber-1')
         let rows = [...appointments]
         const statuses = url.searchParams.getAll('status')
         const status = statuses.find(value => value.startsWith('eq.'))
@@ -54,8 +56,11 @@ test('dashboard suma solo citas completadas y explica la instalación de avisos 
     await page.getByLabel('Correo', { exact: true }).fill(admin.email)
     await page.locator('#login-password').fill('fixture-password-12')
     await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
-    await page.goto(`${base}/admin`)
-    const earnings = page.locator('[class*="earnings"]')
+    await page.waitForURL(`${base}/admin`)
+    await page.getByRole('heading', { name: barberMode ? 'Mis ingresos por día' : 'Ingresos por día', exact: true }).waitFor()
+    const daily = page.locator('section[aria-labelledby="daily-earnings-title"]')
+    assert.match((await daily.locator('[class*="earningsTotal"]').textContent()).replace(/\s/g, ''), /4.?500/)
+    const earnings = page.locator('section[aria-labelledby="completed-earnings-title"]')
     await earnings.getByText('Cliente completado A', { exact: true }).waitFor()
     assert.equal(await earnings.locator('[class*="earningRow"]').count(), 2)
     assert.equal(await earnings.getByText('Cliente aún reservado', { exact: true }).count(), 0)

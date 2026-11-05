@@ -57,11 +57,9 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          {/* Dashboard — admin only, barbers redirect to /admin/citas */}
+          {/* Dashboard para todo el personal */}
           <Route index element={
-            <ProtectedRoute adminOnly>
-              <AdminDashboard />
-            </ProtectedRoute>
+            <AdminDashboard />
           } />
           <Route path="configuracion" element={<Suspense fallback={<p role="status" className="muted">Cargando agenda…</p>}><BookingSettingsPage /></Suspense>} />
           <Route path="citas"     element={<AdminAppointments />} />

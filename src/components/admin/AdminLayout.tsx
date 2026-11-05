@@ -22,7 +22,7 @@ export default function AdminLayout() {
   }
 
   const navItems = [
-    { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true, adminOnly: true },
+    { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true, adminOnly: false },
     { to: '/admin/citas', icon: CalendarDays, label: isAdmin ? 'Citas' : 'Mis citas', end: false, adminOnly: false },
     { to: '/admin/barberos', icon: Scissors, label: 'Barberos', end: false, adminOnly: true },
     { to: '/admin/servicios', icon: Settings, label: 'Servicios', end: false, adminOnly: true },
@@ -31,14 +31,14 @@ export default function AdminLayout() {
   ].filter(item => !item.adminOnly || isAdmin)
 
   const displayName = user?.username || user?.email || 'Usuario'
-  const mobilePrimaryItems = navItems.filter(item => item.to === '/admin/citas' || item.to === '/admin/configuracion' || (isAdmin && item.to === '/admin'))
+  const mobilePrimaryItems = navItems.filter(item => item.to === '/admin/citas' || item.to === '/admin/configuracion' || item.to === '/admin')
   const mobileExtraItems = navItems.filter(item => !mobilePrimaryItems.some(primary => primary.to === item.to))
 
   return (
     <div className={styles.root}>
       <aside className={styles.sidebar}>
         <div className={styles.sidebarTop}>
-          <Link to={isAdmin ? '/admin' : '/admin/citas'} className={styles.logo}>
+          <Link to="/admin" className={styles.logo}>
             <picture><source media="(max-width: 820px)" srcSet="/icons/tenorio.svg" /><img src={logo} alt="Tenorio Barber" className={styles.logoImg} /></picture>
             <span className={styles.logoText}>Control</span>
           </Link>

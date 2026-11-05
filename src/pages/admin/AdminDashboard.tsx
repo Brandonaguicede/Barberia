@@ -10,7 +10,7 @@ import StatusBadge from '../../components/shared/StatusBadge'
 import styles from './AdminDashboard.module.css'
 
 export default function AdminDashboard() {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [stats, setStats] = useState<AppStats | null>(null)
   const [todayAppts, setTodayAppts] = useState<Appointment[]>([])
   const [completedAppts, setCompletedAppts] = useState<Appointment[]>([])
@@ -27,8 +27,13 @@ export default function AdminDashboard() {
       apptParams.barber_id = user.barber_id
       completedParams.barber_id = user.barber_id
     }
+    if (user?.role === 'Barber' && !user.barber_id) {
+      setLoading(false)
+      toast.error('Tu cuenta no tiene un barbero asignado')
+      return
+    }
     Promise.all([
-      appointmentsApi.getStats(),
+      user?.role === 'Admin' ? appointmentsApi.getStats() : Promise.resolve(null),
       appointmentsApi.getAll(apptParams),
       appointmentsApi.getAll(completedParams),
     ]).then(([s, a, completed]) => {
@@ -43,6 +48,13 @@ export default function AdminDashboard() {
   const monthStart = `${localDate().slice(0, 7)}-01`
   const currentMonthLabel = new Intl.DateTimeFormat('es-CR', { timeZone: 'America/Costa_Rica', month: 'long', year: 'numeric' }).format(new Date(`${monthStart}T12:00:00-06:00`))
   const completedRevenue = completedAppts.reduce((total, appointment) => total + Number(appointment.service_price || 0), 0)
+  const dailyRevenue = Object.entries(completedAppts.reduce<Record<string, { total: number; count: number }>>((days, appointment) => {
+    const day = days[appointment.appointment_date] ||= { total: 0, count: 0 }
+    day.total += Number(appointment.service_price || 0)
+    day.count += 1
+    return days
+  }, {})).sort(([left], [right]) => right.localeCompare(left))
+  const todayRevenue = dailyRevenue.find(([date]) => date === localDate())?.[1].total ?? 0
   const formatDate = (value: string) => new Date(`${value}T12:00:00-06:00`).toLocaleDateString('es-CR', { timeZone: 'America/Costa_Rica', day: '2-digit', month: 'short' })
 
   const formatTime = (t: string) => {
@@ -54,11 +66,16 @@ export default function AdminDashboard() {
 
   if (loading) return <div className={styles.loader}><div className="spinner" /></div>
 
-  const metricCards = [
+  const metricCards = isAdmin ? [
     { icon: CalendarCheck, value: stats?.today ?? 0, label: 'Citas hoy' },
     { icon: Clock3, value: stats?.pending ?? 0, label: 'Pendientes' },
     { icon: CalendarDays, value: stats?.upcoming ?? 0, label: 'Proximas' },
     { icon: DollarSign, value: formatPrice(stats?.monthlyRevenue ?? 0), label: 'Ingresos del mes', gold: true },
+  ] : [
+    { icon: CalendarCheck, value: todayAppts.filter(a => a.status !== 'cancelled').length, label: 'Mis citas hoy' },
+    { icon: Clock3, value: todayAppts.filter(a => a.status === 'pending').length, label: 'Pendientes hoy' },
+    { icon: DollarSign, value: formatPrice(todayRevenue), label: 'Mis ingresos hoy', gold: true },
+    { icon: DollarSign, value: formatPrice(completedRevenue), label: 'Mis ingresos del mes', gold: true },
   ]
 
   const quickLinks = [
@@ -66,7 +83,7 @@ export default function AdminDashboard() {
     { to: '/admin/barberos', icon: Scissors, label: 'Gestionar barberos' },
     { to: '/admin/servicios', icon: Settings, label: 'Gestionar servicios' },
     { to: '/admin/usuarios', icon: UsersRound, label: 'Gestionar usuarios' },
-  ]
+  ].filter(link => isAdmin || link.to === '/admin/citas')
 
   return (
     <div className={styles.page}>
@@ -95,6 +112,23 @@ export default function AdminDashboard() {
           )
         })}
       </div>
+
+      <section className={styles.earnings} aria-labelledby="daily-earnings-title">
+        <div className={styles.earningsHeader}>
+          <div className={styles.earningsHeading}>
+            <h2 id="daily-earnings-title"><DollarSign size={19} aria-hidden="true" />{isAdmin ? 'Ingresos por día' : 'Mis ingresos por día'}</h2>
+            <p>{currentMonthLabel} · Solo citas completadas{!isAdmin && ' de tus servicios'}</p>
+          </div>
+          <div className={styles.earningsTotal}><strong>{formatPrice(todayRevenue)}</strong><span>Ingresos de hoy</span></div>
+        </div>
+        {dailyRevenue.length === 0 ? <p className={styles.earningsEmpty}>Aún no hay citas completadas este mes.</p> : <div className={styles.earningsList}>
+          {dailyRevenue.map(([date, day]) => <div key={date} className={styles.earningRow}>
+            <div className={styles.earningDate}><strong>{formatDate(date)}</strong></div>
+            <div className={styles.earningDetails}><span>{day.count} {day.count === 1 ? 'cita completada' : 'citas completadas'}</span></div>
+            <strong className={styles.earningPrice}>{formatPrice(day.total)}</strong>
+          </div>)}
+        </div>}
+      </section>
 
       <section className={styles.earnings} aria-labelledby="completed-earnings-title">
         <div className={styles.earningsHeader}>
