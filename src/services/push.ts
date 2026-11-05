@@ -23,7 +23,9 @@ export async function enablePush(userId: string) {
       "Este navegador no admite notificaciones. En iPhone, instala la app en Inicio y ábrela desde allí.",
     );
   }
-  const key = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  // The VAPID public key is intentionally shipped to browsers; the private key stays in Supabase secrets.
+  const key = import.meta.env.VITE_VAPID_PUBLIC_KEY ||
+    "BDyDofDnVZJ6ljDT0pVUwTl1MzDx5AZAAJeMbV3V0kNG5fx-vm9pA2ov8teZ7ygGVJP_Tes-QkN0KwwvS_5FMYg";
   if (!key) throw new Error("Las notificaciones aún no están configuradas");
   // Called only from an explicit click, before other asynchronous work (iOS requirement).
   if (await Notification.requestPermission() !== "granted") {
