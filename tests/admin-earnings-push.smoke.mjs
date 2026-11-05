@@ -74,6 +74,11 @@ test('dashboard suma solo citas completadas y explica la instalación de avisos 
     assert.match(await notificationCenter.textContent(), /Añadir a pantalla de inicio/)
     assert.equal(await page.getByRole('button', { name: 'Activar notificaciones' }).count(), 0)
     await page.screenshot({ path: '.npm-cache/screenshots/iphone-notification-guide.png', fullPage: true, animations: 'disabled' })
+    appointments[2].status = 'completed'
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+    await page.waitForFunction(() => document.querySelector('section[aria-labelledby="completed-earnings-title"]')?.textContent?.includes('Cliente aún reservado'))
+    assert.equal(await earnings.locator('[class*="earningRow"]').count(), 3)
+    assert.match((await daily.locator('[class*="earningsTotal"]').textContent()).replace(/\s/g, ''), /8.?500/)
     assert.deepEqual(errors, [])
     await context.close()
   } finally { await browser.close() }

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, CalendarCheck, CalendarDays, Clock3, DollarSign, Scissors, Settings, UsersRound } from 'lucide-react'
 import { appointmentsApi } from '../../services/api'
-import toast from '../../services/toast'
 import { localDate } from '../../utils/booking'
 import { useAuth } from '../../context/AuthContext'
 import type { Appointment, AppStats } from '../../types'
@@ -15,33 +14,67 @@ export default function AdminDashboard() {
   const [todayAppts, setTodayAppts] = useState<Appointment[]>([])
   const [completedAppts, setCompletedAppts] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
-    const today = localDate()
-    const [year, month] = today.slice(0, 7).split('-').map(Number)
-    const monthStart = `${today.slice(0, 7)}-01`
-    const nextMonthStart = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10)
-    const apptParams: Record<string, string> = { date: today }
-    const completedParams: Record<string, string> = { status: 'completed', from: monthStart, before: nextMonthStart }
-    if (user?.role === 'Barber' && user.barber_id) {
-      apptParams.barber_id = user.barber_id
-      completedParams.barber_id = user.barber_id
-    }
-    if (user?.role === 'Barber' && !user.barber_id) {
+    let live = true
+    let pending = false
+    setStats(null)
+    setTodayAppts([])
+    setCompletedAppts([])
+    setLoadError('')
+    setLoading(true)
+    if (!user || (user.role === 'Barber' && !user.barber_id)) {
       setLoading(false)
-      toast.error('Tu cuenta no tiene un barbero asignado')
+      setLoadError('Tu cuenta necesita un perfil de barbero vinculado. La administración puede revisarlo en Agenda y horarios, Cuenta de personal.')
       return
     }
-    Promise.all([
-      user?.role === 'Admin' ? appointmentsApi.getStats() : Promise.resolve(null),
-      appointmentsApi.getAll(apptParams),
-      appointmentsApi.getAll(completedParams),
-    ]).then(([s, a, completed]) => {
-      setStats(s)
-      setTodayAppts(a)
-      setCompletedAppts(completed.sort((left, right) => (right.starts_at || '').localeCompare(left.starts_at || '')))
-    }).catch(() => toast.error('No se pudo cargar el resumen')).finally(() => setLoading(false))
-  }, [user])
+    const refresh = async () => {
+      if (pending || document.visibilityState === 'hidden') return
+      pending = true
+      const today = localDate()
+      const [year, month] = today.slice(0, 7).split('-').map(Number)
+      const apptParams: Record<string, string> = { date: today }
+      const completedParams: Record<string, string> = {
+        status: 'completed', from: today.slice(0, 7) + '-01',
+        before: new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10),
+      }
+      if (user.role === 'Barber' && user.barber_id) {
+        apptParams.barber_id = user.barber_id
+        completedParams.barber_id = user.barber_id
+      }
+      try {
+        const [s, a, completed] = await Promise.all([
+          user.role === 'Admin' ? appointmentsApi.getStats() : Promise.resolve(null),
+          appointmentsApi.getAll(apptParams),
+          appointmentsApi.getAll(completedParams),
+        ])
+        if (!live) return
+        setStats(s)
+        setTodayAppts(a)
+        setCompletedAppts(completed.sort((left, right) => (right.starts_at || '').localeCompare(left.starts_at || '')))
+        setLoadError('')
+      } catch {
+        if (live) setLoadError('No se pudo actualizar el resumen. Revisa tu conexión; volveremos a intentarlo automáticamente.')
+      } finally {
+        pending = false
+        if (live) setLoading(false)
+      }
+    }
+    void refresh()
+    const onRefresh = () => { void refresh() }
+    const timer = window.setInterval(onRefresh, 15000)
+    window.addEventListener('focus', onRefresh)
+    window.addEventListener('online', onRefresh)
+    document.addEventListener('visibilitychange', onRefresh)
+    return () => {
+      live = false
+      window.clearInterval(timer)
+      window.removeEventListener('focus', onRefresh)
+      window.removeEventListener('online', onRefresh)
+      document.removeEventListener('visibilitychange', onRefresh)
+    }
+  }, [user?.id, user?.role, user?.barber_id])
 
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', maximumFractionDigits: 0 }).format(p)
@@ -63,6 +96,8 @@ export default function AdminDashboard() {
     const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h
     return `${h12}:${m.toString().padStart(2, '0')} ${suffix}`
   }
+
+  if (!loading && user?.role === 'Barber' && !user.barber_id) return <div className={styles.page}><h1 className={styles.title}>Mis ingresos</h1><p role="alert" className={styles.earningsEmpty}>{loadError}</p></div>
 
   if (loading) return <div className={styles.loader}><div className="spinner" /></div>
 
@@ -97,6 +132,8 @@ export default function AdminDashboard() {
           Nueva cita
         </Link>
       </div>
+
+      {loadError && <p role="alert" className={styles.earningsEmpty}>{loadError}</p>}
 
       <div className={styles.statsGrid}>
         {metricCards.map(card => {
